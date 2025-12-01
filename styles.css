@@ -1,0 +1,594 @@
+/* iOS-Style Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+    --bg-primary: #000000;
+    --bg-secondary: rgba(28, 28, 30, 0.7);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --accent-color: #007AFF;
+    --blur-amount: 40px;
+    --transition: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Background Canvas */
+#background-canvas,
+#trail-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+#trail-canvas {
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Loading Screen */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    z-index: 1000;
+}
+
+.spinner-ios {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--text-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Error Screen */
+.error {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    z-index: 999;
+}
+
+.error-content {
+    text-align: center;
+    padding: 40px;
+}
+
+.error-content svg {
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.error-content h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.error-content p {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* Main Content */
+#content {
+    position: relative;
+    z-index: 2;
+}
+
+/* Settings Button */
+.settings-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 22px;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s var(--transition);
+    z-index: 100;
+}
+
+.settings-btn:hover {
+    background: rgba(58, 58, 60, 0.7);
+    transform: scale(1.05);
+}
+
+.settings-btn:active {
+    transform: scale(0.95);
+}
+
+/* Main Countdown */
+.main-content {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.countdown-container {
+    text-align: center;
+    animation: fadeInUp 0.8s var(--transition);
+}
+
+.event-name {
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin-bottom: 40px;
+    color: var(--text-secondary);
+}
+
+.countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.countdown-number {
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.countdown-separator {
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    margin: 0 -4px;
+}
+
+.event-date {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+/* Counter Styles - Minimal */
+body[data-counter="minimal"] .countdown-number {
+    font-size: 80px;
+    font-weight: 200;
+}
+
+body[data-counter="minimal"] .countdown-label {
+    font-size: 11px;
+}
+
+body[data-counter="minimal"] .countdown-separator {
+    display: none;
+}
+
+/* Counter Styles - Cards */
+body[data-counter="cards"] .countdown-item {
+    background: var(--bg-secondary);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border-radius: 16px;
+    padding: 24px 20px;
+    min-width: 100px;
+}
+
+body[data-counter="cards"] .countdown-separator {
+    display: none;
+}
+
+/* Settings Panel */
+.settings-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 200;
+    transition: right 0.4s var(--transition);
+    overflow-y: auto;
+}
+
+.settings-panel.active {
+    right: 0;
+}
+
+.settings-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    z-index: 1;
+}
+
+.settings-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.settings-body {
+    flex: 1;
+    padding: 20px;
+}
+
+.settings-section {
+    margin-bottom: 32px;
+}
+
+.settings-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
+}
+
+/* Option Group */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.option-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.option-item input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    accent-color: var(--accent-color);
+}
+
+.option-item span {
+    font-size: 16px;
+}
+
+/* Anniversaries List */
+.anniversaries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.anniversary-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.anniversary-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.anniversary-info {
+    flex: 1;
+}
+
+.anniversary-name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.anniversary-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.btn-delete {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background: rgba(255, 59, 48, 0.3);
+}
+
+/* Add Button */
+.btn-add {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-add:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    animation: fadeIn 0.3s;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border-radius: 20px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    animation: scaleIn 0.3s var(--transition);
+}
+
+.modal-content h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0051D5;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .settings-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .countdown-number {
+        font-size: 48px;
+    }
+    
+    .countdown-item {
+        min-width: 60px;
+    }
+    
+    .countdown-separator {
+        font-size: 36px;
+    }
+    
+    .event-name {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .countdown {
+        gap: 8px;
+    }
+    
+    .countdown-number {
+        font-size: 36px;
+    }
+    
+    .countdown-item {
+        min-width: 50px;
+    }
+    
+    .countdown-label {
+        font-size: 11px;
+    }
+    
+    .countdown-separator {
+        font-size: 28px;
+    }
+}
