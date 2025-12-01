@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Countdown</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <canvas id="background-canvas"></canvas>
+    
+    <!-- Mouse Trail Canvas -->
+    <canvas id="trail-canvas"></canvas>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading">
+        <div class="spinner-ios"></div>
+    </div>
+
+    <!-- Error Screen -->
+    <div id="error" class="error hidden">
+        <div class="error-content">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="2"/>
+                <path d="M30 20V32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="30" cy="40" r="1.5" fill="currentColor"/>
+            </svg>
+            <h2>Zugriff verweigert</h2>
+            <p>Gültiger Token erforderlich</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="content" class="hidden">
+        <!-- Settings Button -->
+        <button class="settings-btn" id="settings-btn" aria-label="Einstellungen">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="5" r="2" fill="currentColor"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                <circle cx="12" cy="19" r="2" fill="currentColor"/>
+            </svg>
+        </button>
+
+        <!-- Main Countdown Display -->
+        <main class="main-content">
+            <div class="countdown-container">
+                <h1 class="event-name" id="event-name">Nächster Jahrestag</h1>
+                <div class="countdown" id="countdown">
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="days">0</span>
+                        <span class="countdown-label">Tage</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="hours">0</span>
+                        <span class="countdown-label">Std</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="minutes">0</span>
+                        <span class="countdown-label">Min</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="seconds">0</span>
+                        <span class="countdown-label">Sek</span>
+                    </div>
+                </div>
+                <p class="event-date" id="event-date">14. Februar 2024</p>
+            </div>
+        </main>
+
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-content">
+                <div class="settings-header">
+                    <h2>Einstellungen</h2>
+                    <button class="close-btn" id="close-settings" aria-label="Schließen">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="settings-body">
+                    <!-- Jahrestage -->
+                    <section class="settings-section">
+                        <h3>Jahrestage</h3>
+                        <div id="anniversaries-list" class="anniversaries-list">
+                            <!-- Dynamisch gefüllt -->
+                        </div>
+                        <button class="btn-add" id="add-anniversary">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            Jahrestag hinzufügen
+                        </button>
+                    </section>
+
+                    <!-- Hintergrund-Effekt -->
+                    <section class="settings-section">
+                        <h3>Hintergrund</h3>
+                        <div class="option-group">
+                            <label class="option-item">
+                                <input type="radio" name="background" value="gradient" checked>
+                                <span>Farbverlauf</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="background" value="particles">
+                                <span>Partikel</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="background" value="waves">
+                                <span>Wellen</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="background" value="solid">
+                                <span>Einfarbig</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Counter-Style -->
+                    <section class="settings-section">
+                        <h3>Counter-Darstellung</h3>
+                        <div class="option-group">
+                            <label class="option-item">
+                                <input type="radio" name="counter" value="default" checked>
+                                <span>Standard</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="counter" value="minimal">
+                                <span>Minimal</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="counter" value="cards">
+                                <span>Karten</span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- Mouse Trail -->
+                    <section class="settings-section">
+                        <h3>Maus-Effekt</h3>
+                        <div class="option-group">
+                            <label class="option-item">
+                                <input type="radio" name="trail" value="dots" checked>
+                                <span>Punkte</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="trail" value="line">
+                                <span>Linie</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="trail" value="glow">
+                                <span>Leuchten</span>
+                            </label>
+                            <label class="option-item">
+                                <input type="radio" name="trail" value="none">
+                                <span>Aus</span>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Anniversary Modal -->
+        <div class="modal" id="add-modal">
+            <div class="modal-content">
+                <h3>Neuer Jahrestag</h3>
+                <input type="text" id="new-event-name" placeholder="Name des Events" class="input-field">
+                <input type="date" id="new-event-date" class="input-field">
+                <div class="modal-actions">
+                    <button class="btn-secondary" id="cancel-add">Abbrechen</button>
+                    <button class="btn-primary" id="confirm-add">Hinzufügen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
