@@ -143,12 +143,10 @@ body {
 }
 
 .event-name {
-    font-size: 32px;
-    font-weight: 600;
-    letter-spacing: -0.8px;
-    margin-bottom: 50px;
-    color: var(--text-primary);
+    font-weight: 500;
+    opacity: 0.9;
 }
+
 
 .main-countdown .countdown-number {
     font-size: 72px;
@@ -221,24 +219,30 @@ body {
 /* Anniversary Card */
 .anniversary-card {
     position: relative;
-    background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    border-radius: 22px;
-    padding: 32px 24px;
-    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border-radius: 26px;
+    padding: 30px 26px;
+    border: 1px solid rgba(255,255,255,0.08);
     box-shadow:
-        inset 0 1px 1px rgba(255,255,255,0.25),
-        0 15px 40px rgba(0,0,0,0.45);
-    transition: transform .35s ease, box-shadow .35s ease;
+        0 20px 60px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    transition:
+        transform .35s cubic-bezier(.2,.8,.2,1),
+        box-shadow .35s ease,
+        background .35s ease;
 }
 
+
 .anniversary-card:hover {
-    transform: translateY(-6px) scale(1.01);
+    transform: translateY(-6px);
+    background: rgba(255,255,255,0.06);
     box-shadow:
-        inset 0 1px 1px rgba(255,255,255,0.35),
-        0 25px 60px rgba(0,0,0,0.55);
+        0 35px 80px rgba(0,0,0,0.65),
+        inset 0 1px 0 rgba(255,255,255,0.25);
 }
+
 
 
 .anniversary-card::before {
@@ -247,12 +251,14 @@ body {
     inset: 0;
     border-radius: inherit;
     background: linear-gradient(
-        145deg,
-        rgba(255,255,255,0.15),
-        rgba(255,255,255,0.02)
+        135deg,
+        rgba(255,255,255,0.25),
+        rgba(255,255,255,0.02) 45%
     );
+    opacity: 0.6;
     pointer-events: none;
 }
+
 
 .anniversary-card::after {
     content: "";
@@ -321,17 +327,15 @@ body {
 }
 
 .add-card {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border: 1px dashed rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed rgba(255,255,255,0.12);
 }
 
 .add-card:hover {
-    border-color: rgba(255,255,255,0.4);
-    transform: translateY(-4px);
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.25);
 }
+
 
 .add-content {
     text-align: center;
@@ -339,11 +343,11 @@ body {
 }
 
 .add-plus {
-    font-size: 48px;
-    font-weight: 300;
-    display: block;
-    line-height: 1;
+    font-size: 42px;
+    font-weight: 200;
+    opacity: 0.8;
 }
+
 
 .add-text {
     font-size: 14px;
@@ -367,12 +371,10 @@ body {
 }
 
 .countdown-number {
-    font-size: 64px;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -2px;
-    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    letter-spacing: -1.5px;
 }
+
 
 .countdown-label {
     font-size: 13px;
