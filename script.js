@@ -4,22 +4,29 @@
 
 const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253cbdf4afb297f";
 
-// Standard-Jahrestage
 let anniversaries = [
-    { name: "Unser Jahrestag", date: "2024-02-14" },
-    { name: "Erstes Date", date: "2024-06-15" },
-    { name: "Zusammengezogen", date: "2024-12-25" },
-    { name: "Erster Urlaub", date: "2025-03-20" },
-    { name: "Verlobung", date: "2025-08-10" }
+    { name: "Unser Jahrestag", date: "2024-02-14", archived: false },
+    { name: "Erstes Date", date: "2024-06-15", archived: false },
+    { name: "Zusammengezogen", date: "2024-12-25", archived: false },
+    { name: "Erster Urlaub", date: "2025-03-20", archived: false },
+    { name: "Verlobung", date: "2025-08-10", archived: false }
 ];
 
-// Easter Egg Variablen
 let emptyClickCount = 0;
-let settingsUnlocked = false;
-
-// Settings
-let currentTrailStyle = 'dots';
+let clickResetTimer = null;
+let currentTrailStyle = 'hearts';
+let currentColor = 'red';
 let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
+let currentDetailIndex = null;
+
+const colorSchemes = {
+    red: { base: [255, 107, 157], light: [255, 143, 163] },
+    pink: [255, 154, 158], light: [254, 207, 239] },
+    purple: { base: [161, 140, 209], light: [251, 194, 235] },
+    blue: { base: [102, 126, 234], light: [118, 75, 162] },
+    gold: { base: [240, 147, 251], light: [245, 87, 108] },
+    rainbow: { base: null } // Special handling
+};
 
 // ============================================
 // TOKEN-PRÜFUNG
@@ -63,7 +70,6 @@ function showContent() {
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('error').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
-    
     initApp();
 }
 
@@ -81,16 +87,17 @@ function loadAnniversaries() {
         try {
             anniversaries = JSON.parse(saved);
         } catch (e) {
-            console.error('Fehler beim Laden der Jahrestage');
+            console.error('Fehler beim Laden');
         }
     }
 }
 
 function saveSettings() {
     const settings = {
-        font: document.getElementById('font-select').value,
-        trail: document.getElementById('trail-select').value,
-        units: visibleUnits
+        trail: currentTrailStyle,
+        color: currentColor,
+        units: visibleUnits,
+        font: document.querySelector('input[name="font"]:checked')?.value || 'system'
     };
     localStorage.setItem('settings', JSON.stringify(settings));
 }
@@ -99,24 +106,28 @@ function loadSettings() {
     const saved = localStorage.getItem('settings');
     if (saved) {
         try {
-            const settings = JSON.parse(saved);
+            const s = JSON.parse(saved);
+            if (s.trail) currentTrailStyle = s.trail;
+            if (s.color) currentColor = s.color;
+            if (s.units) visibleUnits = s.units;
+            if (s.font) applyFont(s.font);
             
-            if (settings.font) {
-                document.getElementById('font-select').value = settings.font;
-                applyFont(settings.font);
-            }
-            if (settings.trail) {
-                document.getElementById('trail-select').value = settings.trail;
-                currentTrailStyle = settings.trail;
-            }
-            if (settings.units) {
-                visibleUnits = settings.units;
-                Object.keys(visibleUnits).forEach(unit => {
-                    const checkbox = document.querySelector(`input[data-unit="${unit}"]`);
-                    if (checkbox) checkbox.checked = visibleUnits[unit];
-                });
-                applyVisibleUnits();
-            }
+            // Set UI
+            const trailRadio = document.querySelector(`input[name="trail"][value="${s.trail}"]`);
+            if (trailRadio) trailRadio.checked = true;
+            
+            const colorRadio = document.querySelector(`input[name="color"][value="${s.color}"]`);
+            if (colorRadio) colorRadio.checked = true;
+            
+            const fontRadio = document.querySelector(`input[name="font"][value="${s.font}"]`);
+            if (fontRadio) fontRadio.checked = true;
+            
+            Object.keys(visibleUnits).forEach(unit => {
+                const checkbox = document.querySelector(`input[data-unit="${unit}"]`);
+                if (checkbox) checkbox.checked = visibleUnits[unit];
+            });
+            
+            applyVisibleUnits();
         } catch (e) {
             console.error('Fehler beim Laden der Einstellungen');
         }
@@ -136,6 +147,9 @@ function initApp() {
     setInterval(() => {
         updateMainCountdown();
         updateAllCountdowns();
+        if (currentDetailIndex !== null) {
+            updateDetailCountdown();
+        }
     }, 1000);
     
     initBackground();
@@ -161,66 +175,102 @@ function initScrollIndicator() {
     }
     
     window.addEventListener('scroll', updateScrollIndicator, { passive: true });
-    window.addEventListener('touchmove', updateScrollIndicator, { passive: true });
 }
 
 function initEasterEgg() {
     document.addEventListener('pointerdown', (e) => {
-        // Ignore clicks on interactive elements
-        if (e.target.closest('.anniversary-card')) return;
+        if (e.target.closest('.anniversary-card:not(.add-card)')) return;
         if (e.target.closest('.scroll-indicator')) return;
         if (e.target.closest('.settings')) return;
+        if (e.target.closest('.detail-modal')) return;
+        if (e.target.closest('.confirm-modal')) return;
         
-        // Spawn heart animation
-        spawnHeart(e.clientX, e.clientY);
+        spawnTrailElement(e.clientX, e.clientY);
         
-        // Count clicks
         emptyClickCount++;
         
-        // Unlock settings after 10 clicks
-        if (emptyClickCount >= 10 && !settingsUnlocked) {
-            settingsUnlocked = true;
+        if (emptyClickCount >= 15) {
+            emptyClickCount = 0;
             openSettings();
         }
         
-        // Reset counter after 1 second of inactivity
-        clearTimeout(window._clickReset);
-        window._clickReset = setTimeout(() => {
+        clearTimeout(clickResetTimer);
+        clickResetTimer = setTimeout(() => {
             emptyClickCount = 0;
-        }, 1000);
+        }, 2000);
     });
 }
 
-function spawnHeart(x, y) {
-    const heart = document.createElement('div');
-    const size = Math.random() * 18 + 10;
+function spawnTrailElement(x, y) {
+    if (currentTrailStyle === 'none') return;
     
-    heart.className = 'heart';
-    heart.style.left = `${x - size / 2}px`;
-    heart.style.top = `${y - size / 2}px`;
-    heart.style.fontSize = `${size}px`;
-    heart.style.color = `rgba(255, ${100 + Math.random() * 100}, ${150 + Math.random() * 100}, 0.9)`;
-    heart.innerHTML = '❤';
+    const element = document.createElement('div');
+    const size = Math.random() * 16 + 12;
+    const drift = (Math.random() - 0.5) * 60;
     
-    document.body.appendChild(heart);
+    element.style.left = `${x - size / 2}px`;
+    element.style.top = `${y - size / 2}px`;
+    element.style.fontSize = `${size}px`;
+    element.style.setProperty('--drift', `${drift}px`);
     
-    setTimeout(() => heart.remove(), 2500);
+    if (currentTrailStyle === 'hearts') {
+        element.className = 'heart';
+        element.innerHTML = '❤';
+        element.style.color = getTrailColor();
+    } else if (currentTrailStyle === 'sparks') {
+        element.className = 'spark';
+        element.style.background = getTrailColor();
+        element.style.boxShadow = `0 0 ${size}px ${getTrailColor()}`;
+    } else if (currentTrailStyle === 'stars') {
+        element.className = 'star';
+        element.innerHTML = '⭐';
+        element.style.fontSize = `${size * 1.2}px`;
+    }
+    
+    document.body.appendChild(element);
+    
+    setTimeout(() => element.remove(), 2500);
+}
+
+function getTrailColor() {
+    if (currentColor === 'rainbow') {
+        const hue = Math.random() * 360;
+        return `hsl(${hue}, 85%, 65%)`;
+    }
+    
+    const scheme = colorSchemes[currentColor];
+    if (!scheme) return 'rgba(255, 100, 150, 0.9)';
+    
+    const mix = Math.random();
+    const r = Math.floor(scheme.base[0] * (1 - mix) + scheme.light[0] * mix);
+    const g = Math.floor(scheme.base[1] * (1 - mix) + scheme.light[1] * mix);
+    const b = Math.floor(scheme.base[2] * (1 - mix) + scheme.light[2] * mix);
+    
+    return `rgba(${r}, ${g}, ${b}, 0.9)`;
 }
 
 function initSettingsHandlers() {
-    // Font selector
-    document.getElementById('font-select').addEventListener('change', (e) => {
-        applyFont(e.target.value);
-        saveSettings();
+    document.querySelectorAll('input[name="font"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            applyFont(e.target.value);
+            saveSettings();
+        });
     });
     
-    // Trail selector
-    document.getElementById('trail-select').addEventListener('change', (e) => {
-        currentTrailStyle = e.target.value;
-        saveSettings();
+    document.querySelectorAll('input[name="trail"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentTrailStyle = e.target.value;
+            saveSettings();
+        });
     });
     
-    // Unit checkboxes
+    document.querySelectorAll('input[name="color"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentColor = e.target.value;
+            saveSettings();
+        });
+    });
+    
     document.querySelectorAll('input[data-unit]').forEach(checkbox => {
         checkbox.addEventListener('change', (e) => {
             visibleUnits[e.target.dataset.unit] = e.target.checked;
@@ -243,8 +293,7 @@ function applyVisibleUnits() {
     const units = ['days', 'hours', 'minutes', 'seconds'];
     
     units.forEach((unit, index) => {
-        const items = document.querySelectorAll(`.countdown-item:nth-child(${index * 2 + 1})`);
-        const separators = document.querySelectorAll(`.countdown-separator:nth-child(${index * 2 + 2})`);
+        const items = document.querySelectorAll(`.countdown-item:has([data-${unit}])`);
         
         items.forEach(item => {
             if (visibleUnits[unit]) {
@@ -253,18 +302,9 @@ function applyVisibleUnits() {
                 item.classList.add('unit-hidden');
             }
         });
-        
-        // Hide separator if next unit is hidden
-        if (index < units.length - 1) {
-            separators.forEach(sep => {
-                if (!visibleUnits[units[index + 1]]) {
-                    sep.classList.add('sep-hidden');
-                } else {
-                    sep.classList.remove('sep-hidden');
-                }
-            });
-        }
     });
+    
+    renderAllAnniversaries();
 }
 
 // ============================================
@@ -272,6 +312,7 @@ function applyVisibleUnits() {
 // ============================================
 
 function openSettings() {
+    renderArchivedList();
     document.getElementById('settings-modal').classList.remove('hidden');
 }
 
@@ -279,8 +320,163 @@ function closeSettings() {
     document.getElementById('settings-modal').classList.add('hidden');
 }
 
+function renderArchivedList() {
+    const list = document.getElementById('archived-list');
+    const archived = anniversaries.filter(a => a.archived);
+    
+    if (archived.length === 0) {
+        list.innerHTML = '<p class="empty-state">Keine archivierten Jahrestage</p>';
+        return;
+    }
+    
+    list.innerHTML = archived.map((item, index) => `
+        <div class="archived-item">
+            <div>
+                <div style="font-weight: 500;">${item.name}</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">${formatDate(item.date)}</div>
+            </div>
+            <button onclick="unarchiveAnniversary(${anniversaries.indexOf(item)})">Wiederherstellen</button>
+        </div>
+    `).join('');
+}
+
+function unarchiveAnniversary(index) {
+    anniversaries[index].archived = false;
+    saveAnniversaries();
+    renderArchivedList();
+    renderAllAnniversaries();
+}
+
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;
+window.unarchiveAnniversary = unarchiveAnniversary;
+
+// ============================================
+// DETAIL MODAL
+// ============================================
+
+function openDetail(index) {
+    currentDetailIndex = index;
+    const anniversary = anniversaries[index];
+    
+    document.getElementById('detail-name').value = anniversary.name;
+    document.getElementById('detail-date').value = anniversary.date;
+    
+    document.getElementById('detail-modal').classList.remove('hidden');
+    updateDetailCountdown();
+    
+    // Save on change
+    document.getElementById('detail-name').addEventListener('input', () => {
+        anniversaries[currentDetailIndex].name = document.getElementById('detail-name').value;
+        saveAnniversaries();
+        renderAllAnniversaries();
+    });
+    
+    document.getElementById('detail-date').addEventListener('change', () => {
+        anniversaries[currentDetailIndex].date = document.getElementById('detail-date').value;
+        saveAnniversaries();
+        renderAllAnniversaries();
+    });
+}
+
+function closeDetail() {
+    document.getElementById('detail-modal').classList.add('hidden');
+    document.querySelector('.detail-dropdown')?.classList.add('hidden');
+    currentDetailIndex = null;
+}
+
+function toggleDetailMenu(e) {
+    e.stopPropagation();
+    const dropdown = document.querySelector('.detail-dropdown');
+    dropdown.classList.toggle('hidden');
+    
+    if (!dropdown.classList.contains('hidden')) {
+        setTimeout(() => {
+            document.addEventListener('click', function closeDropdown() {
+                dropdown.classList.add('hidden');
+                document.removeEventListener('click', closeDropdown);
+            });
+        }, 0);
+    }
+}
+
+function archiveAnniversary() {
+    if (currentDetailIndex === null) return;
+    anniversaries[currentDetailIndex].archived = true;
+    saveAnniversaries();
+    closeDetail();
+    renderAllAnniversaries();
+}
+
+function deleteAnniversary() {
+    if (currentDetailIndex === null) return;
+    
+    const anniversary = anniversaries[currentDetailIndex];
+    document.getElementById('delete-confirm-input').value = '';
+    document.getElementById('delete-confirm-input').dataset.expectedName = anniversary.name;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function cancelDelete() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+
+function confirmDelete() {
+    const input = document.getElementById('delete-confirm-input');
+    const expected = input.dataset.expectedName;
+    
+    if (input.value.trim() === expected) {
+        anniversaries.splice(currentDetailIndex, 1);
+        saveAnniversaries();
+        document.getElementById('delete-modal').classList.add('hidden');
+        closeDetail();
+        renderAllAnniversaries();
+    } else {
+        input.style.borderColor = 'var(--danger-color)';
+        setTimeout(() => {
+            input.style.borderColor = '';
+        }, 500);
+    }
+}
+
+function updateDetailCountdown() {
+    if (currentDetailIndex === null) return;
+    
+    const anniversary = anniversaries[currentDetailIndex];
+    const upcomingEvents = getAllUpcomingAnniversaries();
+    const event = upcomingEvents.find(e => e.name === anniversary.name && e.date === anniversary.date);
+    
+    if (!event) return;
+    
+    const now = new Date();
+    const diff = event.targetDate - now;
+    
+    if (diff < 0) return;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    const countdown = document.getElementById('detail-countdown');
+    const daysEl = countdown.querySelector('[data-days]');
+    const hoursEl = countdown.querySelector('[data-hours]');
+    const minutesEl = countdown.querySelector('[data-minutes]');
+    const secondsEl = countdown.querySelector('[data-seconds]');
+    
+    if (daysEl) daysEl.textContent = days.toString().padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
+    if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
+}
+
+window.openDetail = openDetail;
+window.closeDetail = closeDetail;
+window.toggleDetailMenu = toggleDetailMenu;
+window.archiveAnniversary = archiveAnniversary;
+window.deleteAnniversary = deleteAnniversary;
+window.cancelDelete = cancelDelete;
+window.confirmDelete = confirmDelete;
 
 // ============================================
 // COUNTDOWN LOGIK
@@ -290,16 +486,18 @@ function getAllUpcomingAnniversaries() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const upcoming = anniversaries.map(anniversary => {
-        const eventDate = new Date(anniversary.date);
-        const thisYear = new Date(today.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-        const nextYear = new Date(today.getFullYear() + 1, eventDate.getMonth(), eventDate.getDate());
-        
-        let targetDate = thisYear >= today ? thisYear : nextYear;
-        const diff = targetDate - today;
-        
-        return { ...anniversary, targetDate, diff };
-    });
+    const upcoming = anniversaries
+        .filter(a => !a.archived)
+        .map(anniversary => {
+            const eventDate = new Date(anniversary.date);
+            const thisYear = new Date(today.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            const nextYear = new Date(today.getFullYear() + 1, eventDate.getMonth(), eventDate.getDate());
+            
+            let targetDate = thisYear >= today ? thisYear : nextYear;
+            const diff = targetDate - today;
+            
+            return { ...anniversary, targetDate, diff };
+        });
     
     return upcoming.sort((a, b) => a.diff - b.diff);
 }
@@ -313,7 +511,23 @@ function updateMainCountdown() {
         return;
     }
     
-    updateCountdownDisplay(nextEvent, 'main');
+    const now = new Date();
+    const diff = nextEvent.targetDate - now;
+    
+    if (diff < 0) return;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    document.getElementById('days').textContent = days.toString().padStart(2, '0');
+    document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+    document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+    document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+    
+    document.getElementById('event-name').textContent = nextEvent.name;
+    document.getElementById('event-date').textContent = formatDate(nextEvent.date);
 }
 
 function updateAllCountdowns() {
@@ -325,33 +539,6 @@ function updateAllCountdowns() {
             updateCountdownDisplayForCard(card, upcomingEvents[index + 1]);
         }
     });
-}
-
-function updateCountdownDisplay(event, type = 'main') {
-    const now = new Date();
-    const diff = event.targetDate - now;
-    
-    if (diff < 0) {
-        if (type === 'main') {
-            updateMainCountdown();
-        }
-        return;
-    }
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    if (type === 'main') {
-        document.getElementById('days').textContent = days.toString().padStart(2, '0');
-        document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
-        document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
-        document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
-        
-        document.getElementById('event-name').textContent = event.name;
-        document.getElementById('event-date').textContent = formatDate(event.date);
-    }
 }
 
 function updateCountdownDisplayForCard(card, event) {
@@ -394,33 +581,35 @@ function renderAllAnniversaries() {
     container.innerHTML = '';
     
     eventsToShow.forEach((event, index) => {
+        const actualIndex = anniversaries.findIndex(a => 
+            a.name === event.name && a.date === event.date && !a.archived
+        );
+        
         const card = document.createElement('div');
         card.className = 'anniversary-card';
         card.style.animationDelay = `${index * 0.1}s`;
+        card.onclick = () => openDetail(actualIndex);
+        
+        const unitsHTML = ['days', 'hours', 'minutes', 'seconds'].map((unit, i) => {
+            const hidden = !visibleUnits[unit] ? 'unit-hidden' : '';
+            const sepHidden = i < 3 && !visibleUnits[['hours', 'minutes', 'seconds'][i]] ? 'sep-hidden' : '';
+            
+            return `
+                <div class="countdown-item ${hidden}">
+                    <span class="countdown-number" data-${unit}>0</span>
+                    <span class="countdown-label">${
+                        unit === 'days' ? 'Tage' :
+                        unit === 'hours' ? 'Std' :
+                        unit === 'minutes' ? 'Min' : 'Sek'
+                    }</span>
+                </div>
+                ${i < 3 ? `<div class="countdown-separator ${sepHidden}">:</div>` : ''}
+            `;
+        }).join('');
         
         card.innerHTML = `
             <h2 class="event-name">${event.name}</h2>
-            <div class="countdown">
-                <div class="countdown-item ${!visibleUnits.days ? 'unit-hidden' : ''}">
-                    <span class="countdown-number" data-days>0</span>
-                    <span class="countdown-label">Tage</span>
-                </div>
-                <div class="countdown-separator ${!visibleUnits.hours ? 'sep-hidden' : ''}">:</div>
-                <div class="countdown-item ${!visibleUnits.hours ? 'unit-hidden' : ''}">
-                    <span class="countdown-number" data-hours>0</span>
-                    <span class="countdown-label">Std</span>
-                </div>
-                <div class="countdown-separator ${!visibleUnits.minutes ? 'sep-hidden' : ''}">:</div>
-                <div class="countdown-item ${!visibleUnits.minutes ? 'unit-hidden' : ''}">
-                    <span class="countdown-number" data-minutes>0</span>
-                    <span class="countdown-label">Min</span>
-                </div>
-                <div class="countdown-separator ${!visibleUnits.seconds ? 'sep-hidden' : ''}">:</div>
-                <div class="countdown-item ${!visibleUnits.seconds ? 'unit-hidden' : ''}">
-                    <span class="countdown-number" data-seconds>0</span>
-                    <span class="countdown-label">Sek</span>
-                </div>
-            </div>
+            <div class="countdown">${unitsHTML}</div>
             <p class="event-date">${formatDate(event.date)}</p>
         `;
         
@@ -438,14 +627,15 @@ function renderAllAnniversaries() {
         </div>
     `;
     
-    addCard.addEventListener('click', () => {
+    addCard.addEventListener('click', (e) => {
+        e.stopPropagation();
         const name = prompt('Name des Jahrestags:');
         if (!name) return;
         
         const date = prompt('Datum (YYYY-MM-DD):');
         if (!date) return;
         
-        anniversaries.push({ name, date });
+        anniversaries.push({ name, date, archived: false });
         saveAnniversaries();
         renderAllAnniversaries();
     });
@@ -456,8 +646,6 @@ function renderAllAnniversaries() {
 // ============================================
 // HINTERGRUND
 // ============================================
-
-let animationFrame;
 
 function initBackground() {
     const canvas = document.getElementById('background-canvas');
@@ -470,10 +658,6 @@ function initBackground() {
     resize();
     window.addEventListener('resize', resize);
     
-    animateGradient(ctx, canvas);
-}
-
-function animateGradient(ctx, canvas) {
     let hue = 0;
     
     function draw() {
@@ -486,7 +670,7 @@ function animateGradient(ctx, canvas) {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         hue = (hue + 0.2) % 360;
-        animationFrame = requestAnimationFrame(draw);
+        requestAnimationFrame(draw);
     }
     draw();
 }
@@ -496,7 +680,7 @@ function animateGradient(ctx, canvas) {
 // ============================================
 
 const trail = [];
-const maxTrailLength = 13;
+const maxTrailLength = 15;
 
 function initMouseTrail() {
     const canvas = document.getElementById('trail-canvas');
@@ -510,55 +694,23 @@ function initMouseTrail() {
     window.addEventListener('resize', resize);
     
     document.addEventListener('mousemove', (e) => {
-        trail.push({ x: e.clientX, y: e.clientY, age: 0 });
-        if (trail.length > maxTrailLength) trail.shift();
+        if (currentTrailStyle === 'none') return;
+        
+        for (let i = 0; i < 2; i++) {
+            setTimeout(() => {
+                spawnTrailElement(
+                    e.clientX + (Math.random() - 0.5) * 10,
+                    e.clientY + (Math.random() - 0.5) * 10
+                );
+            }, i * 50);
+        }
     });
     
     document.addEventListener('touchmove', (e) => {
+        if (currentTrailStyle === 'none') return;
         const touch = e.touches[0];
-        trail.push({ x: touch.clientX, y: touch.clientY, age: 0 });
-        if (trail.length > maxTrailLength) trail.shift();
+        spawnTrailElement(touch.clientX, touch.clientY);
     });
-    
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        trail.forEach((point, i) => {
-            point.age++;
-            const opacity = 1 - (point.age / maxTrailLength);
-            
-            if (currentTrailStyle === 'none') return;
-            
-            if (currentTrailStyle === 'dots') {
-                ctx.fillStyle = `rgba(0, 122, 255, ${opacity * 0.6})`;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            } else if (currentTrailStyle === 'line' && i > 0) {
-                ctx.strokeStyle = `rgba(0, 122, 255, ${opacity * 0.6})`;
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.moveTo(trail[i - 1].x, trail[i - 1].y);
-                ctx.lineTo(point.x, point.y);
-                ctx.stroke();
-            } else if (currentTrailStyle === 'glow') {
-                ctx.fillStyle = `rgba(0, 122, 255, ${opacity * 0.3})`;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = 'rgba(0, 122, 255, 0.8)';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-        });
-        
-        trail.forEach((point, i) => {
-            if (point.age > maxTrailLength) trail.splice(i, 1);
-        });
-        
-        requestAnimationFrame(animate);
-    }
-    animate();
 }
 
 // ============================================
@@ -582,5 +734,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 500);
 });
 
-console.log('🍎 iOS-Style Anniversary App geladen');
-console.log('💡 Token-Hash generieren: generateTokenHash("dein_token")');
+console.log('🍎 Anniversary App geladen');
