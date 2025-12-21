@@ -107,18 +107,25 @@ function initApp() {
     // Scroll Indicator ausblenden beim Scrollen
 const scrollIndicator = document.querySelector('.scroll-indicator');
 
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
+function updateScrollIndicator() {
+    if (window.scrollY > 30) {
         scrollIndicator?.classList.add('hidden');
     } else {
         scrollIndicator?.classList.remove('hidden');
     }
-});
+}
 
-    document.addEventListener('click', (e) => {
-    if (e.target.closest('.anniversary-card') || e.target.closest('.scroll-indicator')) return;
+window.addEventListener('scroll', updateScrollIndicator, { passive: true });
+window.addEventListener('touchmove', updateScrollIndicator, { passive: true });
+
+
+document.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('.anniversary-card')) return;
+    if (e.target.closest('.scroll-indicator')) return;
+    if (e.target.closest('.settings')) return;
 
     spawnHeart(e.clientX, e.clientY);
+
     emptyClickCount++;
 
     if (emptyClickCount >= 10 && !settingsUnlocked) {
@@ -126,8 +133,12 @@ window.addEventListener('scroll', () => {
         openSettings();
     }
 
-    setTimeout(() => emptyClickCount = 0, 1200);
+    clearTimeout(window._clickReset);
+    window._clickReset = setTimeout(() => {
+        emptyClickCount = 0;
+    }, 1000);
 });
+
 
 
 }
