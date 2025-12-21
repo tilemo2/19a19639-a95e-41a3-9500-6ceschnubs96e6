@@ -100,6 +100,17 @@ function initApp() {
     document.querySelector('.scroll-indicator')?.addEventListener('click', () => {
         document.querySelector('.all-anniversaries-section')?.scrollIntoView({ behavior: 'smooth' });
     });
+    // Scroll Indicator ausblenden beim Scrollen
+const scrollIndicator = document.querySelector('.scroll-indicator');
+
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        scrollIndicator?.classList.add('hidden');
+    } else {
+        scrollIndicator?.classList.remove('hidden');
+    }
+});
+
 }
 
 // ============================================
@@ -254,6 +265,30 @@ function renderAllAnniversaries() {
         container.appendChild(card);
         updateCountdownDisplayForCard(card, event);
     });
+    // Plus-Karte
+const addCard = document.createElement('div');
+addCard.className = 'anniversary-card add-card';
+addCard.innerHTML = `
+    <div class="add-content">
+        <span class="add-plus">+</span>
+        <span class="add-text">Jahrestag hinzufügen</span>
+    </div>
+`;
+
+addCard.addEventListener('click', () => {
+    const name = prompt('Name des Jahrestags:');
+    if (!name) return;
+
+    const date = prompt('Datum (YYYY-MM-DD):');
+    if (!date) return;
+
+    anniversaries.push({ name, date });
+    saveAnniversaries();
+    renderAllAnniversaries();
+});
+
+container.appendChild(addCard);
+
 }
 
 // ============================================
