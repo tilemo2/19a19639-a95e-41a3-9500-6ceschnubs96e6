@@ -6,6 +6,15 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+body {
+    -webkit-user-select: none;
+    user-select: none;
+}
+input, textarea, select {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 
 :root {
     --bg-primary: #000000;
