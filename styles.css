@@ -6,15 +6,16 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
+
 body {
     -webkit-user-select: none;
     user-select: none;
 }
-input, textarea, select {
+
+input, textarea, select, button {
     -webkit-user-select: text;
     user-select: text;
 }
-
 
 :root {
     --bg-primary: #000000;
@@ -35,6 +36,14 @@ body {
     overflow-y: auto;
     position: relative;
     scroll-behavior: smooth;
+}
+
+body.font-serif {
+    font-family: "Georgia", "Times New Roman", serif;
+}
+
+body.font-mono {
+    font-family: "SF Mono", "Menlo", "Courier New", monospace;
 }
 
 .hidden {
@@ -120,19 +129,6 @@ body {
     color: var(--text-secondary);
 }
 
-
-
-
-
-.scroll-indicator {
-    opacity: 1;
-    transition: opacity 0.4s ease;
-}
-
-.scroll-indicator.hidden {
-    opacity: 0;
-}
-
 /* Main Content */
 #content {
     position: relative;
@@ -156,12 +152,33 @@ body {
 }
 
 .event-name {
-    font-weight: 500;
-    opacity: 0.9;
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.8px;
+    margin-bottom: 50px;
+    color: var(--text-primary);
 }
 
+.countdown {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 30px;
+}
 
-.main-countdown .countdown-number {
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.countdown-item.unit-hidden {
+    display: none;
+}
+
+.countdown-number {
     font-size: 72px;
     font-weight: 600;
     line-height: 1;
@@ -169,7 +186,7 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-.main-countdown .countdown-label {
+.countdown-label {
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -178,11 +195,20 @@ body {
     letter-spacing: 0.5px;
 }
 
-.main-countdown .countdown-separator {
+.countdown-separator {
     font-size: 56px;
     font-weight: 300;
     color: var(--text-secondary);
     margin: 0 -4px;
+}
+
+.countdown-separator.sep-hidden {
+    display: none;
+}
+
+.event-date {
+    font-size: 16px;
+    color: var(--text-secondary);
 }
 
 /* Scroll Indicator */
@@ -192,18 +218,9 @@ body {
     left: 50%;
     transform: translateX(-50%);
     color: var(--text-secondary);
-    animation: bounce 2s infinite;
-    cursor: pointer;
-}
-
-.scroll-indicator {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--text-secondary);
     cursor: pointer;
     transition: opacity 0.4s ease;
+    animation: bounce 2s infinite;
 }
 
 .scroll-indicator.hidden {
@@ -211,6 +228,17 @@ body {
     pointer-events: none;
 }
 
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    40% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+    60% {
+        transform: translateX(-50%) translateY(-5px);
+    }
+}
 
 /* All Anniversaries Section */
 .all-anniversaries-section {
@@ -237,26 +265,25 @@ body {
     -webkit-backdrop-filter: blur(40px) saturate(180%);
     border-radius: 26px;
     padding: 30px 26px;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow:
-        0 20px 60px rgba(0,0,0,0.55),
-        inset 0 1px 0 rgba(255,255,255,0.15);
-    transition:
-        transform .35s cubic-bezier(.2,.8,.2,1),
-        box-shadow .35s ease,
-        background .35s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: 
+        transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 0.35s ease,
+        background 0.35s ease;
+    text-align: center;
+    animation: fadeInUp 0.6s var(--transition) both;
 }
-
 
 .anniversary-card:hover {
     transform: translateY(-6px);
-    background: rgba(255,255,255,0.06);
-    box-shadow:
-        0 35px 80px rgba(0,0,0,0.65),
-        inset 0 1px 0 rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 
+        0 35px 80px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-
-
 
 .anniversary-card::before {
     content: "";
@@ -265,27 +292,12 @@ body {
     border-radius: inherit;
     background: linear-gradient(
         135deg,
-        rgba(255,255,255,0.25),
-        rgba(255,255,255,0.02) 45%
+        rgba(255, 255, 255, 0.25),
+        rgba(255, 255, 255, 0.02) 45%
     );
     opacity: 0.6;
     pointer-events: none;
 }
-
-
-.anniversary-card::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-        135deg,
-        rgba(255,255,255,0.25),
-        rgba(255,255,255,0.02) 40%
-    );
-    pointer-events: none;
-}
-
 
 .anniversary-card .event-name {
     font-size: 24px;
@@ -296,159 +308,254 @@ body {
 }
 
 .anniversary-card .countdown {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 8px;
     margin-bottom: 20px;
 }
 
 .anniversary-card .countdown-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     min-width: 60px;
 }
 
 .anniversary-card .countdown-number {
     font-size: 36px;
-    font-weight: 600;
-    line-height: 1;
     letter-spacing: -1px;
-    font-variant-numeric: tabular-nums;
 }
 
 .anniversary-card .countdown-label {
     font-size: 11px;
-    font-weight: 500;
-    color: var(--text-secondary);
     margin-top: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .anniversary-card .countdown-separator {
     font-size: 28px;
-    font-weight: 300;
-    color: var(--text-secondary);
     margin: 0 -2px;
 }
 
 .anniversary-card .event-date {
     font-size: 14px;
-    color: var(--text-secondary);
 }
 
+/* Add Card */
 .add-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px dashed rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    cursor: pointer;
 }
 
 .add-card:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.25);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
-
 .add-content {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
     color: var(--text-secondary);
 }
 
 .add-plus {
-    font-size: 42px;
+    font-size: 48px;
     font-weight: 200;
+    line-height: 1;
+    margin-bottom: 12px;
     opacity: 0.8;
 }
 
-
 .add-text {
     font-size: 14px;
-    margin-top: 8px;
+    opacity: 0.9;
 }
 
-
-.countdown {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 30px;
-}
-
-.countdown-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 80px;
-}
-
-.countdown-number {
-    font-weight: 500;
-    letter-spacing: -1.5px;
-}
-
-
-.countdown-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.countdown-separator {
-    font-size: 48px;
-    font-weight: 300;
-    color: var(--text-secondary);
-    margin: 0 -4px;
-}
-
-.event-date {
-    font-size: 16px;
-    color: var(--text-secondary);
-}
-
-.settings {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-}
-
-.settings-card {
-    width: 320px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(30px);
-    border-radius: 20px;
-    padding: 24px;
-    color: white;
-}
-
-
+/* Floating Hearts */
 .heart {
     position: fixed;
     pointer-events: none;
     animation: floatUp 2.5s ease forwards;
     opacity: 0.9;
+    z-index: 1500;
 }
 
 @keyframes floatUp {
     0% {
-        transform: translateY(0) scale(1);
+        transform: translateY(0) scale(1) rotate(0deg);
         opacity: 0.9;
     }
     100% {
-        transform: translateY(-120px) scale(1.4);
+        transform: translateY(-120px) scale(1.4) rotate(15deg);
         opacity: 0;
     }
 }
 
+/* Settings Modal */
+.settings {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-card {
+    width: 90%;
+    max-width: 400px;
+    background: rgba(28, 28, 30, 0.95);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: scaleIn 0.3s var(--transition);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.settings-body {
+    padding: 24px;
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 24px;
+}
+
+.setting-item > span {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+}
+
+.setting-item select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.setting-item select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.checkboxes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.checkboxes label {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.checkboxes label:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.checkboxes input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    accent-color: var(--accent-color);
+}
+
+.btn-done {
+    width: calc(100% - 48px);
+    margin: 0 24px 24px;
+    padding: 14px;
+    border: none;
+    background: var(--accent-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-done:hover {
+    background: #0051D5;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -456,15 +563,15 @@ body {
         font-size: 24px;
     }
     
-    .main-countdown .countdown-number {
+    .countdown-number {
         font-size: 48px;
     }
     
-    .main-countdown .countdown-item {
+    .countdown-item {
         min-width: 60px;
     }
     
-    .main-countdown .countdown-separator {
+    .countdown-separator {
         font-size: 36px;
     }
     
@@ -478,23 +585,23 @@ body {
 }
 
 @media (max-width: 480px) {
-    .main-countdown {
+    .countdown {
         gap: 8px;
     }
     
-    .main-countdown .countdown-number {
+    .countdown-number {
         font-size: 36px;
     }
     
-    .main-countdown .countdown-item {
+    .countdown-item {
         min-width: 50px;
     }
     
-    .main-countdown .countdown-label {
+    .countdown-label {
         font-size: 11px;
     }
     
-    .main-countdown .countdown-separator {
+    .countdown-separator {
         font-size: 28px;
     }
     
