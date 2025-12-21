@@ -78,37 +78,51 @@
                 <!-- Dynamisch gefüllt mit JavaScript -->
             </div>
         </section>
+    </div>
 
+    <!-- Settings Modal (Hidden Easter Egg) -->
+    <div id="settings-modal" class="settings hidden">
+        <div class="settings-card">
+            <div class="settings-header">
+                <h2>Einstellungen</h2>
+                <button class="close-btn" onclick="closeSettings()">×</button>
+            </div>
+
+            <div class="settings-body">
+                <label class="setting-item">
+                    <span>Schriftart</span>
+                    <select id="font-select">
+                        <option value="system">System</option>
+                        <option value="serif">Serif</option>
+                        <option value="mono">Monospace</option>
+                    </select>
+                </label>
+
+                <label class="setting-item">
+                    <span>Countdown-Einheiten</span>
+                    <div class="checkboxes">
+                        <label><input type="checkbox" data-unit="days" checked> Tage</label>
+                        <label><input type="checkbox" data-unit="hours" checked> Std</label>
+                        <label><input type="checkbox" data-unit="minutes" checked> Min</label>
+                        <label><input type="checkbox" data-unit="seconds" checked> Sek</label>
+                    </div>
+                </label>
+
+                <label class="setting-item">
+                    <span>Maus-Effekt</span>
+                    <select id="trail-select">
+                        <option value="dots">Punkte</option>
+                        <option value="line">Linie</option>
+                        <option value="glow">Leuchten</option>
+                        <option value="none">Aus</option>
+                    </select>
+                </label>
+            </div>
+
+            <button class="btn-done" onclick="closeSettings()">Fertig</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
-
-    <div id="settings-modal" class="settings hidden">
-  <div class="settings-card">
-    <h2>Einstellungen</h2>
-
-    <label>
-      Schriftart
-      <select id="font-select">
-        <option value="system">System</option>
-        <option value="serif">Serif</option>
-        <option value="mono">Monospace</option>
-      </select>
-    </label>
-
-    <label>
-      Countdown anzeigen
-      <div class="checkboxes">
-        <label><input type="checkbox" data-unit="days" checked> Tage</label>
-        <label><input type="checkbox" data-unit="hours" checked> Std</label>
-        <label><input type="checkbox" data-unit="minutes" checked> Min</label>
-        <label><input type="checkbox" data-unit="seconds" checked> Sek</label>
-      </div>
-    </label>
-
-    <button onclick="closeSettings()">Fertig</button>
-  </div>
-</div>
-
 </body>
 </html>
