@@ -21,7 +21,7 @@ let currentDetailIndex = null;
 
 const colorSchemes = {
     red: { base: [255, 107, 157], light: [255, 143, 163] },
-    pink: [255, 154, 158], light: [254, 207, 239] },
+    pink: { base: [255, 154, 158], light: [254, 207, 239] },
     purple: { base: [161, 140, 209], light: [251, 194, 235] },
     blue: { base: [102, 126, 234], light: [118, 75, 162] },
     gold: { base: [240, 147, 251], light: [245, 87, 108] },
