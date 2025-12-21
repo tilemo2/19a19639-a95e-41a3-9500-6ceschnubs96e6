@@ -82,5 +82,33 @@
     </div>
 
     <script src="script.js"></script>
+
+    <div id="settings-modal" class="settings hidden">
+  <div class="settings-card">
+    <h2>Einstellungen</h2>
+
+    <label>
+      Schriftart
+      <select id="font-select">
+        <option value="system">System</option>
+        <option value="serif">Serif</option>
+        <option value="mono">Monospace</option>
+      </select>
+    </label>
+
+    <label>
+      Countdown anzeigen
+      <div class="checkboxes">
+        <label><input type="checkbox" data-unit="days" checked> Tage</label>
+        <label><input type="checkbox" data-unit="hours" checked> Std</label>
+        <label><input type="checkbox" data-unit="minutes" checked> Min</label>
+        <label><input type="checkbox" data-unit="seconds" checked> Sek</label>
+      </div>
+    </label>
+
+    <button onclick="closeSettings()">Fertig</button>
+  </div>
+</div>
+
 </body>
 </html>
