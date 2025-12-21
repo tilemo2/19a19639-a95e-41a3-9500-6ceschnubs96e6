@@ -120,6 +120,19 @@ body {
     color: var(--text-secondary);
 }
 
+
+
+
+
+.scroll-indicator {
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.scroll-indicator.hidden {
+    opacity: 0;
+}
+
 /* Main Content */
 #content {
     position: relative;
