@@ -13,6 +13,10 @@ let anniversaries = [
     { name: "Verlobung", date: "2025-08-10" }
 ];
 
+let emptyClickCount = 0;
+let settingsUnlocked = false;
+
+
 // ============================================
 // TOKEN-PRÜFUNG
 // ============================================
@@ -110,6 +114,21 @@ window.addEventListener('scroll', () => {
         scrollIndicator?.classList.remove('hidden');
     }
 });
+
+    document.addEventListener('click', (e) => {
+    if (e.target.closest('.anniversary-card') || e.target.closest('.scroll-indicator')) return;
+
+    spawnHeart(e.clientX, e.clientY);
+    emptyClickCount++;
+
+    if (emptyClickCount >= 10 && !settingsUnlocked) {
+        settingsUnlocked = true;
+        openSettings();
+    }
+
+    setTimeout(() => emptyClickCount = 0, 1200);
+});
+
 
 }
 
@@ -217,6 +236,28 @@ function formatDate(dateString) {
     const options = { day: '2-digit', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('de-DE', options);
 }
+
+
+
+
+
+
+function spawnHeart(x, y) {
+    const heart = document.createElement('div');
+    const size = Math.random() * 18 + 10;
+
+    heart.className = 'heart';
+    heart.style.left = `${x - size / 2}px`;
+    heart.style.top = `${y - size / 2}px`;
+    heart.style.fontSize = `${size}px`;
+    heart.style.color = `rgba(255, ${100 + Math.random()*100}, ${150 + Math.random()*100}, 0.9)`;
+    heart.innerHTML = '❤';
+
+    document.body.appendChild(heart);
+
+    setTimeout(() => heart.remove(), 2500);
+}
+
 
 // ============================================
 // RENDER ALLE JAHRESTAGE
@@ -335,7 +376,7 @@ function animateGradient(ctx, canvas) {
 
 let currentTrailStyle = 'dots';
 const trail = [];
-const maxTrailLength = 20;
+const maxTrailLength = 13;
 
 function initMouseTrail() {
     const canvas = document.getElementById('trail-canvas');
@@ -361,6 +402,14 @@ function initMouseTrail() {
     
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = `rgba(255,255,255,${opacity * 0.15})`;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
         
         trail.forEach((point, i) => {
             point.age++;
@@ -409,6 +458,16 @@ window.generateTokenHash = async function(token) {
     console.log('Kopiere den Hash und füge ihn in CORRECT_TOKEN_HASH ein');
     return hash;
 };
+
+
+function openSettings() {
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+
 
 // ============================================
 // INITIALISIERUNG
