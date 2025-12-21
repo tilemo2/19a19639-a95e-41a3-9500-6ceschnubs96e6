@@ -2,9 +2,9 @@
 // KONFIGURATION
 // ============================================
 
-const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253cbdf4afb297f"; // Dein Token-Hash
+const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253cbdf4afb297f";
 
-// Standard-Jahrestage (werden aus localStorage geladen wenn vorhanden)
+// Standard-Jahrestage
 let anniversaries = [
     { name: "Unser Jahrestag", date: "2024-02-14" },
     { name: "Erstes Date", date: "2024-06-15" },
@@ -13,9 +13,13 @@ let anniversaries = [
     { name: "Verlobung", date: "2025-08-10" }
 ];
 
+// Easter Egg Variablen
 let emptyClickCount = 0;
 let settingsUnlocked = false;
 
+// Settings
+let currentTrailStyle = 'dots';
+let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
 
 // ============================================
 // TOKEN-PRÜFUNG
@@ -64,12 +68,11 @@ function showContent() {
 }
 
 // ============================================
-// LOCALSTORAGE FUNKTIONEN
+// LOCALSTORAGE
 // ============================================
 
 function saveAnniversaries() {
-    const data = JSON.stringify(anniversaries);
-    localStorage.setItem('anniversaries', data);
+    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
 }
 
 function loadAnniversaries() {
@@ -83,65 +86,201 @@ function loadAnniversaries() {
     }
 }
 
+function saveSettings() {
+    const settings = {
+        font: document.getElementById('font-select').value,
+        trail: document.getElementById('trail-select').value,
+        units: visibleUnits
+    };
+    localStorage.setItem('settings', JSON.stringify(settings));
+}
+
+function loadSettings() {
+    const saved = localStorage.getItem('settings');
+    if (saved) {
+        try {
+            const settings = JSON.parse(saved);
+            
+            if (settings.font) {
+                document.getElementById('font-select').value = settings.font;
+                applyFont(settings.font);
+            }
+            if (settings.trail) {
+                document.getElementById('trail-select').value = settings.trail;
+                currentTrailStyle = settings.trail;
+            }
+            if (settings.units) {
+                visibleUnits = settings.units;
+                Object.keys(visibleUnits).forEach(unit => {
+                    const checkbox = document.querySelector(`input[data-unit="${unit}"]`);
+                    if (checkbox) checkbox.checked = visibleUnits[unit];
+                });
+                applyVisibleUnits();
+            }
+        } catch (e) {
+            console.error('Fehler beim Laden der Einstellungen');
+        }
+    }
+}
+
 // ============================================
 // APP INITIALISIERUNG
 // ============================================
 
 function initApp() {
     loadAnniversaries();
+    loadSettings();
     updateMainCountdown();
     renderAllAnniversaries();
+    
     setInterval(() => {
         updateMainCountdown();
         updateAllCountdowns();
     }, 1000);
     
-    // Hintergrund und Mouse Trail initialisieren
     initBackground();
     initMouseTrail();
+    initScrollIndicator();
+    initEasterEgg();
+    initSettingsHandlers();
+}
+
+function initScrollIndicator() {
+    const scrollIndicator = document.querySelector('.scroll-indicator');
     
-    // Smooth scroll für Scroll-Indicator
-    document.querySelector('.scroll-indicator')?.addEventListener('click', () => {
+    scrollIndicator?.addEventListener('click', () => {
         document.querySelector('.all-anniversaries-section')?.scrollIntoView({ behavior: 'smooth' });
     });
-    // Scroll Indicator ausblenden beim Scrollen
-const scrollIndicator = document.querySelector('.scroll-indicator');
+    
+    function updateScrollIndicator() {
+        if (window.scrollY > 30) {
+            scrollIndicator?.classList.add('hidden');
+        } else {
+            scrollIndicator?.classList.remove('hidden');
+        }
+    }
+    
+    window.addEventListener('scroll', updateScrollIndicator, { passive: true });
+    window.addEventListener('touchmove', updateScrollIndicator, { passive: true });
+}
 
-function updateScrollIndicator() {
-    if (window.scrollY > 30) {
-        scrollIndicator?.classList.add('hidden');
-    } else {
-        scrollIndicator?.classList.remove('hidden');
+function initEasterEgg() {
+    document.addEventListener('pointerdown', (e) => {
+        // Ignore clicks on interactive elements
+        if (e.target.closest('.anniversary-card')) return;
+        if (e.target.closest('.scroll-indicator')) return;
+        if (e.target.closest('.settings')) return;
+        
+        // Spawn heart animation
+        spawnHeart(e.clientX, e.clientY);
+        
+        // Count clicks
+        emptyClickCount++;
+        
+        // Unlock settings after 10 clicks
+        if (emptyClickCount >= 10 && !settingsUnlocked) {
+            settingsUnlocked = true;
+            openSettings();
+        }
+        
+        // Reset counter after 1 second of inactivity
+        clearTimeout(window._clickReset);
+        window._clickReset = setTimeout(() => {
+            emptyClickCount = 0;
+        }, 1000);
+    });
+}
+
+function spawnHeart(x, y) {
+    const heart = document.createElement('div');
+    const size = Math.random() * 18 + 10;
+    
+    heart.className = 'heart';
+    heart.style.left = `${x - size / 2}px`;
+    heart.style.top = `${y - size / 2}px`;
+    heart.style.fontSize = `${size}px`;
+    heart.style.color = `rgba(255, ${100 + Math.random() * 100}, ${150 + Math.random() * 100}, 0.9)`;
+    heart.innerHTML = '❤';
+    
+    document.body.appendChild(heart);
+    
+    setTimeout(() => heart.remove(), 2500);
+}
+
+function initSettingsHandlers() {
+    // Font selector
+    document.getElementById('font-select').addEventListener('change', (e) => {
+        applyFont(e.target.value);
+        saveSettings();
+    });
+    
+    // Trail selector
+    document.getElementById('trail-select').addEventListener('change', (e) => {
+        currentTrailStyle = e.target.value;
+        saveSettings();
+    });
+    
+    // Unit checkboxes
+    document.querySelectorAll('input[data-unit]').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            visibleUnits[e.target.dataset.unit] = e.target.checked;
+            applyVisibleUnits();
+            saveSettings();
+        });
+    });
+}
+
+function applyFont(font) {
+    document.body.classList.remove('font-serif', 'font-mono');
+    if (font === 'serif') {
+        document.body.classList.add('font-serif');
+    } else if (font === 'mono') {
+        document.body.classList.add('font-mono');
     }
 }
 
-window.addEventListener('scroll', updateScrollIndicator, { passive: true });
-window.addEventListener('touchmove', updateScrollIndicator, { passive: true });
-
-
-document.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.anniversary-card')) return;
-    if (e.target.closest('.scroll-indicator')) return;
-    if (e.target.closest('.settings')) return;
-
-    spawnHeart(e.clientX, e.clientY);
-
-    emptyClickCount++;
-
-    if (emptyClickCount >= 10 && !settingsUnlocked) {
-        settingsUnlocked = true;
-        openSettings();
-    }
-
-    clearTimeout(window._clickReset);
-    window._clickReset = setTimeout(() => {
-        emptyClickCount = 0;
-    }, 1000);
-});
-
-
-
+function applyVisibleUnits() {
+    const units = ['days', 'hours', 'minutes', 'seconds'];
+    
+    units.forEach((unit, index) => {
+        const items = document.querySelectorAll(`.countdown-item:nth-child(${index * 2 + 1})`);
+        const separators = document.querySelectorAll(`.countdown-separator:nth-child(${index * 2 + 2})`);
+        
+        items.forEach(item => {
+            if (visibleUnits[unit]) {
+                item.classList.remove('unit-hidden');
+            } else {
+                item.classList.add('unit-hidden');
+            }
+        });
+        
+        // Hide separator if next unit is hidden
+        if (index < units.length - 1) {
+            separators.forEach(sep => {
+                if (!visibleUnits[units[index + 1]]) {
+                    sep.classList.add('sep-hidden');
+                } else {
+                    sep.classList.remove('sep-hidden');
+                }
+            });
+        }
+    });
 }
+
+// ============================================
+// SETTINGS MODAL
+// ============================================
+
+function openSettings() {
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeSettings() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+
+window.openSettings = openSettings;
+window.closeSettings = closeSettings;
 
 // ============================================
 // COUNTDOWN LOGIK
@@ -159,14 +298,9 @@ function getAllUpcomingAnniversaries() {
         let targetDate = thisYear >= today ? thisYear : nextYear;
         const diff = targetDate - today;
         
-        return {
-            ...anniversary,
-            targetDate,
-            diff
-        };
+        return { ...anniversary, targetDate, diff };
     });
     
-    // Sortiere nach nächstem Datum
     return upcoming.sort((a, b) => a.diff - b.diff);
 }
 
@@ -183,11 +317,11 @@ function updateMainCountdown() {
 }
 
 function updateAllCountdowns() {
-    const cards = document.querySelectorAll('.anniversary-card');
+    const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
     const upcomingEvents = getAllUpcomingAnniversaries();
     
     cards.forEach((card, index) => {
-        if (upcomingEvents[index + 1]) { // Skip first (main countdown)
+        if (upcomingEvents[index + 1]) {
             updateCountdownDisplayForCard(card, upcomingEvents[index + 1]);
         }
     });
@@ -248,37 +382,13 @@ function formatDate(dateString) {
     return date.toLocaleDateString('de-DE', options);
 }
 
-
-
-
-
-
-function spawnHeart(x, y) {
-    const heart = document.createElement('div');
-    const size = Math.random() * 18 + 10;
-
-    heart.className = 'heart';
-    heart.style.left = `${x - size / 2}px`;
-    heart.style.top = `${y - size / 2}px`;
-    heart.style.fontSize = `${size}px`;
-    heart.style.color = `rgba(255, ${100 + Math.random()*100}, ${150 + Math.random()*100}, 0.9)`;
-    heart.innerHTML = '❤';
-
-    document.body.appendChild(heart);
-
-    setTimeout(() => heart.remove(), 2500);
-}
-
-
 // ============================================
-// RENDER ALLE JAHRESTAGE
+// RENDER JAHRESTAGE
 // ============================================
 
 function renderAllAnniversaries() {
     const container = document.getElementById('all-anniversaries');
     const upcomingEvents = getAllUpcomingAnniversaries();
-    
-    // Skip first event (already shown in main countdown)
     const eventsToShow = upcomingEvents.slice(1);
     
     container.innerHTML = '';
@@ -291,22 +401,22 @@ function renderAllAnniversaries() {
         card.innerHTML = `
             <h2 class="event-name">${event.name}</h2>
             <div class="countdown">
-                <div class="countdown-item">
+                <div class="countdown-item ${!visibleUnits.days ? 'unit-hidden' : ''}">
                     <span class="countdown-number" data-days>0</span>
                     <span class="countdown-label">Tage</span>
                 </div>
-                <div class="countdown-separator">:</div>
-                <div class="countdown-item">
+                <div class="countdown-separator ${!visibleUnits.hours ? 'sep-hidden' : ''}">:</div>
+                <div class="countdown-item ${!visibleUnits.hours ? 'unit-hidden' : ''}">
                     <span class="countdown-number" data-hours>0</span>
                     <span class="countdown-label">Std</span>
                 </div>
-                <div class="countdown-separator">:</div>
-                <div class="countdown-item">
+                <div class="countdown-separator ${!visibleUnits.minutes ? 'sep-hidden' : ''}">:</div>
+                <div class="countdown-item ${!visibleUnits.minutes ? 'unit-hidden' : ''}">
                     <span class="countdown-number" data-minutes>0</span>
                     <span class="countdown-label">Min</span>
                 </div>
-                <div class="countdown-separator">:</div>
-                <div class="countdown-item">
+                <div class="countdown-separator ${!visibleUnits.seconds ? 'sep-hidden' : ''}">:</div>
+                <div class="countdown-item ${!visibleUnits.seconds ? 'unit-hidden' : ''}">
                     <span class="countdown-number" data-seconds>0</span>
                     <span class="countdown-label">Sek</span>
                 </div>
@@ -317,34 +427,34 @@ function renderAllAnniversaries() {
         container.appendChild(card);
         updateCountdownDisplayForCard(card, event);
     });
-    // Plus-Karte
-const addCard = document.createElement('div');
-addCard.className = 'anniversary-card add-card';
-addCard.innerHTML = `
-    <div class="add-content">
-        <span class="add-plus">+</span>
-        <span class="add-text">Jahrestag hinzufügen</span>
-    </div>
-`;
-
-addCard.addEventListener('click', () => {
-    const name = prompt('Name des Jahrestags:');
-    if (!name) return;
-
-    const date = prompt('Datum (YYYY-MM-DD):');
-    if (!date) return;
-
-    anniversaries.push({ name, date });
-    saveAnniversaries();
-    renderAllAnniversaries();
-});
-
-container.appendChild(addCard);
-
+    
+    // Add-Karte
+    const addCard = document.createElement('div');
+    addCard.className = 'anniversary-card add-card';
+    addCard.innerHTML = `
+        <div class="add-content">
+            <span class="add-plus">+</span>
+            <span class="add-text">Jahrestag hinzufügen</span>
+        </div>
+    `;
+    
+    addCard.addEventListener('click', () => {
+        const name = prompt('Name des Jahrestags:');
+        if (!name) return;
+        
+        const date = prompt('Datum (YYYY-MM-DD):');
+        if (!date) return;
+        
+        anniversaries.push({ name, date });
+        saveAnniversaries();
+        renderAllAnniversaries();
+    });
+    
+    container.appendChild(addCard);
 }
 
 // ============================================
-// HINTERGRUND-EFFEKTE
+// HINTERGRUND
 // ============================================
 
 let animationFrame;
@@ -385,7 +495,6 @@ function animateGradient(ctx, canvas) {
 // MOUSE TRAIL
 // ============================================
 
-let currentTrailStyle = 'dots';
 const trail = [];
 const maxTrailLength = 13;
 
@@ -413,18 +522,12 @@ function initMouseTrail() {
     
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = `rgba(255,255,255,${opacity * 0.15})`;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = 'rgba(255,255,255,0.3)';
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
         
         trail.forEach((point, i) => {
             point.age++;
             const opacity = 1 - (point.age / maxTrailLength);
+            
+            if (currentTrailStyle === 'none') return;
             
             if (currentTrailStyle === 'dots') {
                 ctx.fillStyle = `rgba(0, 122, 255, ${opacity * 0.6})`;
@@ -459,26 +562,15 @@ function initMouseTrail() {
 }
 
 // ============================================
-// HELPER FUNKTION FÜR KONSOLE
+// HELPER
 // ============================================
 
 window.generateTokenHash = async function(token) {
     const hash = await hashToken(token);
     console.log('Token:', token);
     console.log('Hash:', hash);
-    console.log('Kopiere den Hash und füge ihn in CORRECT_TOKEN_HASH ein');
     return hash;
 };
-
-
-function openSettings() {
-    document.getElementById('settings-modal').classList.remove('hidden');
-}
-
-function closeSettings() {
-    document.getElementById('settings-modal').classList.add('hidden');
-}
-
 
 // ============================================
 // INITIALISIERUNG
