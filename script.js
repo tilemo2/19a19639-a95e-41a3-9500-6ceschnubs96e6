@@ -3,7 +3,7 @@
 // KONFIGURATION
 // ============================================
 
-const CORRECT_TOKEN_HASH = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // Hash von "password"
+const CORRECT_TOKEN_HASH = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // Hash richtig
 
 // Standard-Jahrestage (werden aus localStorage geladen wenn vorhanden)
 let anniversaries = [
