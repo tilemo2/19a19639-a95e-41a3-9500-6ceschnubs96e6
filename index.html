@@ -80,7 +80,50 @@
         </section>
     </div>
 
-    <!-- Settings Modal (Hidden Easter Egg) -->
+    <!-- Anniversary Detail Modal -->
+    <div id="detail-modal" class="detail-modal hidden">
+        <div class="detail-card">
+            <button class="detail-close" onclick="closeDetail()">×</button>
+            
+            <div class="detail-menu">
+                <button class="menu-dots" onclick="toggleDetailMenu(event)">⋯</button>
+                <div class="detail-dropdown hidden">
+                    <button onclick="archiveAnniversary()">Archivieren</button>
+                    <button onclick="deleteAnniversary()" class="danger">Löschen</button>
+                </div>
+            </div>
+
+            <div class="detail-content">
+                <input type="text" class="detail-name editable-field" id="detail-name" placeholder="Name des Events">
+                
+                <div class="countdown detail-countdown" id="detail-countdown">
+                    <div class="countdown-item">
+                        <span class="countdown-number" data-days>0</span>
+                        <span class="countdown-label">Tage</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" data-hours>0</span>
+                        <span class="countdown-label">Std</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" data-minutes>0</span>
+                        <span class="countdown-label">Min</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" data-seconds>0</span>
+                        <span class="countdown-label">Sek</span>
+                    </div>
+                </div>
+                
+                <input type="date" class="detail-date editable-field" id="detail-date">
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
     <div id="settings-modal" class="settings hidden">
         <div class="settings-card">
             <div class="settings-header">
@@ -89,37 +132,126 @@
             </div>
 
             <div class="settings-body">
-                <label class="setting-item">
-                    <span>Schriftart</span>
-                    <select id="font-select">
-                        <option value="system">System</option>
-                        <option value="serif">Serif</option>
-                        <option value="mono">Monospace</option>
-                    </select>
-                </label>
-
-                <label class="setting-item">
-                    <span>Countdown-Einheiten</span>
-                    <div class="checkboxes">
-                        <label><input type="checkbox" data-unit="days" checked> Tage</label>
-                        <label><input type="checkbox" data-unit="hours" checked> Std</label>
-                        <label><input type="checkbox" data-unit="minutes" checked> Min</label>
-                        <label><input type="checkbox" data-unit="seconds" checked> Sek</label>
+                <div class="setting-section">
+                    <h3>Schriftart</h3>
+                    <div class="option-grid">
+                        <label class="option-card">
+                            <input type="radio" name="font" value="system" checked>
+                            <span>System</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="font" value="serif">
+                            <span>Serif</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="font" value="mono">
+                            <span>Mono</span>
+                        </label>
                     </div>
-                </label>
+                </div>
 
-                <label class="setting-item">
-                    <span>Maus-Effekt</span>
-                    <select id="trail-select">
-                        <option value="dots">Punkte</option>
-                        <option value="line">Linie</option>
-                        <option value="glow">Leuchten</option>
-                        <option value="none">Aus</option>
-                    </select>
-                </label>
+                <div class="setting-section">
+                    <h3>Maus-Effekt</h3>
+                    <div class="option-grid">
+                        <label class="option-card">
+                            <input type="radio" name="trail" value="hearts" checked>
+                            <span>❤️ Herzen</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="trail" value="sparks">
+                            <span>✨ Funken</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="trail" value="stars">
+                            <span>⭐ Sterne</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="trail" value="none">
+                            <span>Aus</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-section">
+                    <h3>Herz-Farbe</h3>
+                    <div class="color-grid">
+                        <label class="color-option">
+                            <input type="radio" name="color" value="red" checked>
+                            <span class="color-preview" style="background: linear-gradient(135deg, #ff6b9d, #ff8fa3);"></span>
+                            <span>Rot</span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="color" value="pink">
+                            <span class="color-preview" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);"></span>
+                            <span>Rosa</span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="color" value="purple">
+                            <span class="color-preview" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);"></span>
+                            <span>Lila</span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="color" value="blue">
+                            <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);"></span>
+                            <span>Blau</span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="color" value="gold">
+                            <span class="color-preview" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></span>
+                            <span>Gold</span>
+                        </label>
+                        <label class="color-option">
+                            <input type="radio" name="color" value="rainbow">
+                            <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);"></span>
+                            <span>Regenbogen</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-section">
+                    <h3>Countdown-Einheiten</h3>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-card">
+                            <input type="checkbox" data-unit="days" checked>
+                            <span>Tage</span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" data-unit="hours" checked>
+                            <span>Std</span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" data-unit="minutes" checked>
+                            <span>Min</span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" data-unit="seconds" checked>
+                            <span>Sek</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-section">
+                    <h3>Archivierte Jahrestage</h3>
+                    <div id="archived-list" class="archived-list">
+                        <p class="empty-state">Keine archivierten Jahrestage</p>
+                    </div>
+                </div>
             </div>
 
             <button class="btn-done" onclick="closeSettings()">Fertig</button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="confirm-modal hidden">
+        <div class="confirm-card">
+            <h3>Jahrestag löschen?</h3>
+            <p>Gib den Namen des Jahrestags ein um zu bestätigen:</p>
+            <input type="text" id="delete-confirm-input" class="confirm-input" placeholder="Name eingeben">
+            <div class="confirm-actions">
+                <button class="btn-cancel" onclick="cancelDelete()">Abbrechen</button>
+                <button class="btn-delete" onclick="confirmDelete()">Löschen</button>
+            </div>
         </div>
     </div>
 
