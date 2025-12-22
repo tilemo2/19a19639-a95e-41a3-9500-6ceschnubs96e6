@@ -9,19 +9,15 @@
     <title>Countdown</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <!-- Animated Background -->
+<body data-theme="romantic">
     <canvas id="background-canvas"></canvas>
-    
-    <!-- Mouse Trail Canvas -->
     <canvas id="trail-canvas"></canvas>
+    <canvas id="confetti-canvas"></canvas>
 
-    <!-- Loading Screen -->
     <div id="loading" class="loading">
         <div class="spinner-ios"></div>
     </div>
 
-    <!-- Error Screen -->
     <div id="error" class="error hidden">
         <div class="error-content">
             <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
@@ -34,37 +30,36 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div id="content" class="hidden">
-        <!-- Hero Section - Main Countdown -->
         <section class="hero-section">
             <div class="countdown-container">
-                <h1 class="event-name" id="event-name">Nächster Jahrestag</h1>
-                <div class="countdown main-countdown" id="countdown">
-                    <div class="countdown-item">
-                        <span class="countdown-number" id="days">0</span>
+                <h1 class="event-name clickable-main" id="event-name" onclick="openMainDetail()">
+                    <span class="scrolling-text" id="main-name-scroll">Nächster Jahrestag</span>
+                </h1>
+                <div class="countdown main-countdown clickable-main" id="countdown" onclick="openMainDetail()">
+                    <div class="countdown-item countdown-days">
+                        <span class="countdown-number" id="days">000</span>
                         <span class="countdown-label">Tage</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" id="hours">0</span>
+                        <span class="countdown-number" id="hours">00</span>
                         <span class="countdown-label">Std</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" id="minutes">0</span>
+                        <span class="countdown-number" id="minutes">00</span>
                         <span class="countdown-label">Min</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" id="seconds">0</span>
+                        <span class="countdown-number" id="seconds">00</span>
                         <span class="countdown-label">Sek</span>
                     </div>
                 </div>
                 <p class="event-date" id="event-date">14. Februar 2024</p>
             </div>
             
-            <!-- Scroll Indicator -->
             <div class="scroll-indicator">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -72,78 +67,120 @@
             </div>
         </section>
 
-        <!-- All Anniversaries Section -->
         <section class="all-anniversaries-section">
-            <div class="anniversaries-container" id="all-anniversaries">
-                <!-- Dynamisch gefüllt mit JavaScript -->
-            </div>
+            <div class="anniversaries-container" id="all-anniversaries"></div>
         </section>
     </div>
 
-    <!-- Anniversary Detail Modal -->
-    <div id="detail-modal" class="detail-modal hidden">
-        <div class="detail-card">
-            <button class="detail-close" onclick="closeDetail()">×</button>
-            
+    <div id="detail-modal" class="detail-modal hidden" onclick="closeOnBackdrop(event, 'detail-modal')">
+        <div class="detail-card glass" onclick="event.stopPropagation()">
             <div class="detail-menu">
                 <button class="menu-dots" onclick="toggleDetailMenu(event)">⋯</button>
-                <div class="detail-dropdown hidden">
+                <div class="detail-dropdown glass hidden">
                     <button onclick="archiveAnniversary()">Archivieren</button>
                     <button onclick="deleteAnniversary()" class="danger">Löschen</button>
                 </div>
             </div>
 
             <div class="detail-content">
-                <input type="text" class="detail-name editable-field" id="detail-name" placeholder="Name des Events">
+                <div class="detail-name-wrapper">
+                    <input type="text" class="detail-name editable-field inset" id="detail-name" placeholder="Name des Events">
+                </div>
                 
                 <div class="countdown detail-countdown" id="detail-countdown">
-                    <div class="countdown-item">
-                        <span class="countdown-number" data-days>0</span>
+                    <div class="countdown-item countdown-days">
+                        <span class="countdown-number" data-days>000</span>
                         <span class="countdown-label">Tage</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" data-hours>0</span>
+                        <span class="countdown-number" data-hours>00</span>
                         <span class="countdown-label">Std</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" data-minutes>0</span>
+                        <span class="countdown-number" data-minutes>00</span>
                         <span class="countdown-label">Min</span>
                     </div>
                     <div class="countdown-separator">:</div>
                     <div class="countdown-item">
-                        <span class="countdown-number" data-seconds>0</span>
+                        <span class="countdown-number" data-seconds>00</span>
                         <span class="countdown-label">Sek</span>
                     </div>
                 </div>
                 
-                <input type="date" class="detail-date editable-field" id="detail-date">
+                <input type="date" class="detail-date editable-field inset" id="detail-date">
+
+                <div class="repeating-toggle">
+                    <label class="toggle-label inset">
+                        <input type="checkbox" id="repeating-toggle" onchange="toggleRepeating()">
+                        <span class="toggle-text">Jährlich wiederholen</span>
+                    </label>
+                </div>
+
+                <div class="memories-section" id="memories-section">
+                    <h3 class="memories-title">Erinnerungen</h3>
+                    <div class="memories-container" id="memories-container"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="settings hidden">
-        <div class="settings-card">
+    <div id="settings-modal" class="settings hidden" onclick="closeOnBackdrop(event, 'settings-modal')">
+        <div class="settings-card glass" onclick="event.stopPropagation()">
             <div class="settings-header">
                 <h2>Einstellungen</h2>
-                <button class="close-btn" onclick="closeSettings()">×</button>
             </div>
 
             <div class="settings-body">
                 <div class="setting-section">
+                    <h3>Theme</h3>
+                    <div class="theme-grid">
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="romantic" checked>
+                            <div class="theme-preview romantic-preview"></div>
+                            <span>Romantisch</span>
+                        </label>
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="ocean">
+                            <div class="theme-preview ocean-preview"></div>
+                            <span>Ozean</span>
+                        </label>
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="sunset">
+                            <div class="theme-preview sunset-preview"></div>
+                            <span>Sonnenuntergang</span>
+                        </label>
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="forest">
+                            <div class="theme-preview forest-preview"></div>
+                            <span>Wald</span>
+                        </label>
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="midnight">
+                            <div class="theme-preview midnight-preview"></div>
+                            <span>Mitternacht</span>
+                        </label>
+                        <label class="theme-card inset">
+                            <input type="radio" name="theme" value="pastel">
+                            <div class="theme-preview pastel-preview"></div>
+                            <span>Pastell</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-section">
                     <h3>Schriftart</h3>
                     <div class="option-grid">
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="font" value="system" checked>
                             <span>System</span>
                         </label>
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="font" value="serif">
                             <span>Serif</span>
                         </label>
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="font" value="mono">
                             <span>Mono</span>
                         </label>
@@ -153,19 +190,15 @@
                 <div class="setting-section">
                     <h3>Maus-Effekt</h3>
                     <div class="option-grid">
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="trail" value="hearts" checked>
                             <span>❤️ Herzen</span>
                         </label>
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="trail" value="sparks">
                             <span>✨ Funken</span>
                         </label>
-                        <label class="option-card">
-                            <input type="radio" name="trail" value="stars">
-                            <span>⭐ Sterne</span>
-                        </label>
-                        <label class="option-card">
+                        <label class="option-card inset">
                             <input type="radio" name="trail" value="none">
                             <span>Aus</span>
                         </label>
@@ -175,32 +208,32 @@
                 <div class="setting-section">
                     <h3>Herz-Farbe</h3>
                     <div class="color-grid">
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="red" checked>
                             <span class="color-preview" style="background: linear-gradient(135deg, #ff6b9d, #ff8fa3);"></span>
                             <span>Rot</span>
                         </label>
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="pink">
                             <span class="color-preview" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);"></span>
                             <span>Rosa</span>
                         </label>
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="purple">
                             <span class="color-preview" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);"></span>
                             <span>Lila</span>
                         </label>
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="blue">
                             <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);"></span>
                             <span>Blau</span>
                         </label>
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="gold">
                             <span class="color-preview" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></span>
                             <span>Gold</span>
                         </label>
-                        <label class="color-option">
+                        <label class="color-option inset">
                             <input type="radio" name="color" value="rainbow">
                             <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);"></span>
                             <span>Regenbogen</span>
@@ -211,19 +244,19 @@
                 <div class="setting-section">
                     <h3>Countdown-Einheiten</h3>
                     <div class="checkbox-grid">
-                        <label class="checkbox-card">
+                        <label class="checkbox-card inset">
                             <input type="checkbox" data-unit="days" checked>
                             <span>Tage</span>
                         </label>
-                        <label class="checkbox-card">
+                        <label class="checkbox-card inset">
                             <input type="checkbox" data-unit="hours" checked>
                             <span>Std</span>
                         </label>
-                        <label class="checkbox-card">
+                        <label class="checkbox-card inset">
                             <input type="checkbox" data-unit="minutes" checked>
                             <span>Min</span>
                         </label>
-                        <label class="checkbox-card">
+                        <label class="checkbox-card inset">
                             <input type="checkbox" data-unit="seconds" checked>
                             <span>Sek</span>
                         </label>
@@ -238,19 +271,18 @@
                 </div>
             </div>
 
-            <button class="btn-done" onclick="closeSettings()">Fertig</button>
+            <button class="btn-done raised" onclick="closeSettings()">Fertig</button>
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="confirm-modal hidden">
-        <div class="confirm-card">
+    <div id="delete-modal" class="confirm-modal hidden" onclick="closeOnBackdrop(event, 'delete-modal')">
+        <div class="confirm-card glass" onclick="event.stopPropagation()">
             <h3>Jahrestag löschen?</h3>
             <p>Gib den Namen des Jahrestags ein um zu bestätigen:</p>
-            <input type="text" id="delete-confirm-input" class="confirm-input" placeholder="Name eingeben">
+            <input type="text" id="delete-confirm-input" class="confirm-input inset" placeholder="Name eingeben">
             <div class="confirm-actions">
-                <button class="btn-cancel" onclick="cancelDelete()">Abbrechen</button>
-                <button class="btn-delete" onclick="confirmDelete()">Löschen</button>
+                <button class="btn-cancel raised" onclick="cancelDelete()">Abbrechen</button>
+                <button class="btn-delete raised" onclick="confirmDelete()">Löschen</button>
             </div>
         </div>
     </div>
