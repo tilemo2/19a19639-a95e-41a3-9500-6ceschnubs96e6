@@ -298,6 +298,24 @@ body[data-theme="pastel"] {--bg-start: #ffecd2;--bg-mid: #fcb69f;--bg-end: #ff9a
 .btn-delete {background: var(--danger-color);color: white;}
 .btn-delete:hover {background: #d32f2f;}
 
+/* TIME SLOT MACHINE */
+.time-slot-machine {display: flex;align-items: center;justify-content: center;gap: 8px;}
+.time-slot {display: flex;flex-direction: column;align-items: center;gap: 4px;}
+.slot-btn {width: 50px;height: 32px;border: none;background: rgba(255,255,255,0.1);color: var(--text-primary);font-size: 14px;cursor: pointer;border-radius: 8px;transition: all 0.2s;}
+.slot-btn:hover {background: rgba(255,255,255,0.2);}
+.slot-btn:active {background: rgba(255,255,255,0.3);transform: scale(0.95);}
+.slot-value {font-size: 32px;font-weight: 600;min-width: 60px;text-align: center;padding: 8px 0;background: rgba(0,0,0,0.3);border-radius: 12px;}
+.slot-separator {font-size: 32px;font-weight: 300;color: var(--text-secondary);padding: 0 4px;}
+
+/* RELATIONSHIP STAT CARD */
+.stat-relationship {flex-direction: row;justify-content: space-between;padding: 32px;}
+.stat-relationship-content {text-align: left;}
+.stat-value-large {font-size: 42px;font-weight: 700;letter-spacing: -1px;margin: 8px 0;}
+
+/* THIS MONTH LIST */
+.this-month-list {display: flex;flex-direction: column;gap: 8px;margin-top: 8px;}
+.this-month-item {padding: 10px 14px;background: rgba(0,0,0,0.2);border-radius: 10px;font-size: 14px;}
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
     .event-name {font-size: 24px;}
