@@ -157,45 +157,109 @@ function getTargetDate(a) {
     return thisY > now ? thisY : nextY;
 }
 
-// Hole alle Jahrestage für die Anzeige
+// Gibt das letzte (vergangene) Vorkommen des Jahrestags zurück
+function getLastOccurrence(a) {
+    const [y,m,d] = a.date.split('-').map(Number);
+    const [h,min] = (a.time||'00:00').split(':').map(Number);
+    
+    const now = new Date(), ty = now.getFullYear();
+    const thisY = new Date(ty, m-1, d, h, min);
+    const lastY = new Date(ty-1, m-1, d, h, min);
+    return thisY <= now ? thisY : lastY;
+}
+
+// 12 Stunden in Millisekunden
+const GRACE_PERIOD = 12 * 60 * 60 * 1000;
+
+// Hole alle Jahrestage für die Anzeige (inkl. kürzlich vergangene)
 function getAllAnniversariesForDisplay() {
     const now = new Date();
-    return anniversaries.filter(a => !a.archived).map((a) => ({ 
-        ...a, 
-        targetDate: getTargetDate(a), 
-        diff: getTargetDate(a) - now, 
-        originalIndex: anniversaries.indexOf(a)
-    })).sort((a,b) => a.diff - b.diff);
+    return anniversaries.filter(a => !a.archived).map((a) => {
+        const targetDate = getTargetDate(a);
+        const lastOccurrence = getLastOccurrence(a);
+        const diff = targetDate - now;
+        const timeSinceLast = now - lastOccurrence;
+        
+        // Wenn der Jahrestag kürzlich war (innerhalb von 12h), zeige ihn mit negativem Countdown
+        const isInGracePeriod = timeSinceLast >= 0 && timeSinceLast < GRACE_PERIOD;
+        
+        return { 
+            ...a, 
+            targetDate: isInGracePeriod ? lastOccurrence : targetDate,
+            diff: isInGracePeriod ? -timeSinceLast : diff,
+            originalIndex: anniversaries.indexOf(a),
+            isInGracePeriod,
+            timeSinceLast
+        };
+    }).sort((a,b) => {
+        // Jahrestage in der Grace Period zuerst (die aktuellsten), dann zukünftige nach Datum
+        if (a.isInGracePeriod && !b.isInGracePeriod) return -1;
+        if (!a.isInGracePeriod && b.isInGracePeriod) return 1;
+        if (a.isInGracePeriod && b.isInGracePeriod) return a.diff - b.diff; // Weniger negativ = aktueller
+        return a.diff - b.diff;
+    });
 }
 function getAllUpcomingAnniversaries() {
     const now = new Date();
-    return anniversaries.filter(a => !a.archived).map((a,i) => ({ 
-        ...a, 
-        targetDate: getTargetDate(a), 
-        diff: getTargetDate(a) - now, 
-        originalIndex: anniversaries.indexOf(a)
-    })).sort((a,b) => a.diff - b.diff);
+    return anniversaries.filter(a => !a.archived).map((a) => {
+        const targetDate = getTargetDate(a);
+        const lastOccurrence = getLastOccurrence(a);
+        const diff = targetDate - now;
+        const timeSinceLast = now - lastOccurrence;
+        
+        const isInGracePeriod = timeSinceLast >= 0 && timeSinceLast < GRACE_PERIOD;
+        
+        return { 
+            ...a, 
+            targetDate: isInGracePeriod ? lastOccurrence : targetDate,
+            diff: isInGracePeriod ? -timeSinceLast : diff,
+            originalIndex: anniversaries.indexOf(a),
+            isInGracePeriod,
+            timeSinceLast
+        };
+    }).sort((a,b) => {
+        if (a.isInGracePeriod && !b.isInGracePeriod) return -1;
+        if (!a.isInGracePeriod && b.isInGracePeriod) return 1;
+        if (a.isInGracePeriod && b.isInGracePeriod) return a.diff - b.diff;
+        return a.diff - b.diff;
+    });
 }
 function updateMainCountdown() {
-    const ev = getAllUpcomingAnniversaries().find(e => e.diff > 0);
+    const allEvs = getAllUpcomingAnniversaries();
+    // Zeige entweder einen in der Grace Period oder den nächsten zukünftigen
+    const ev = allEvs.find(e => e.isInGracePeriod) || allEvs.find(e => e.diff > 0);
+    
     if (!ev) { 
         document.getElementById('main-name-scroll').textContent = 'Kein Jahrestag'; 
         document.getElementById('event-date').textContent = '';
+        document.getElementById('countdown').classList.remove('countdown-negative', 'countdown-celebrating');
         return; 
     }
-    const diff = ev.targetDate - new Date();
-    const days = Math.floor(diff / 86400000), hours = Math.floor((diff % 86400000) / 3600000);
-    const mins = Math.floor((diff % 3600000) / 60000), secs = Math.floor((diff % 60000) / 1000);
-    document.getElementById('days').textContent = days.toString().padStart(3,'0');
+    
+    const isNegative = ev.diff < 0;
+    const absDiff = Math.abs(ev.diff);
+    const days = Math.floor(absDiff / 86400000);
+    const hours = Math.floor((absDiff % 86400000) / 3600000);
+    const mins = Math.floor((absDiff % 3600000) / 60000);
+    const secs = Math.floor((absDiff % 60000) / 1000);
+    
+    const prefix = isNegative ? '-' : '';
+    document.getElementById('days').textContent = prefix + days.toString().padStart(3,'0');
     document.getElementById('hours').textContent = hours.toString().padStart(2,'0');
     document.getElementById('minutes').textContent = mins.toString().padStart(2,'0');
     document.getElementById('seconds').textContent = secs.toString().padStart(2,'0');
     document.getElementById('main-name-scroll').textContent = ev.name;
     
+    // Toggle celebrating class
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.classList.toggle('countdown-negative', isNegative);
+    countdownEl.classList.toggle('countdown-celebrating', isNegative);
+    
     const annivNum = getAnniversaryNumber(ev);
     const annivNumText = formatAnniversaryNumber(annivNum);
     const dateText = formatDateDisplay(ev.date, ev.time);
-    document.getElementById('event-date').textContent = annivNumText ? `${annivNumText} • ${dateText}` : dateText;
+    const celebratingText = isNegative ? '🎉 Jetzt feiern! • ' : '';
+    document.getElementById('event-date').textContent = celebratingText + (annivNumText ? `${annivNumText} • ${dateText}` : dateText);
 }
 function updateAllCountdowns() {
     const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
@@ -205,24 +269,38 @@ function updateAllCountdowns() {
     });
 }
 function updateCountdownDisplayForCard(card, ev) {
-    const diff = ev.targetDate - new Date();
-    if (diff < 0) return;
-    const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000);
-    const m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+    const isNegative = ev.diff < 0;
+    const absDiff = Math.abs(ev.diff);
+    const d = Math.floor(absDiff/86400000);
+    const h = Math.floor((absDiff%86400000)/3600000);
+    const m = Math.floor((absDiff%3600000)/60000);
+    const s = Math.floor((absDiff%60000)/1000);
+    
     const el = (sel) => card.querySelector(sel);
-    if (el('[data-days]')) el('[data-days]').textContent = d.toString().padStart(3,'0');
+    const prefix = isNegative ? '-' : '';
+    if (el('[data-days]')) el('[data-days]').textContent = prefix + d.toString().padStart(3,'0');
     if (el('[data-hours]')) el('[data-hours]').textContent = h.toString().padStart(2,'0');
     if (el('[data-minutes]')) el('[data-minutes]').textContent = m.toString().padStart(2,'0');
     if (el('[data-seconds]')) el('[data-seconds]').textContent = s.toString().padStart(2,'0');
+    
+    // Toggle celebrating class on card
+    card.classList.toggle('card-celebrating', isNegative);
 }
 function formatDateDisplay(date, time) {
     const [y,m,d] = date.split('-');
     return `${d}.${m}.${y}` + (time && time !== '00:00' ? ` • ${time}` : '');
 }
 
-// Berechnet die wievielte Wiederholung des Jahrestags bevorsteht
+// Berechnet die wievielte Wiederholung des Jahrestags bevorsteht/gefeiert wird
 function getAnniversaryNumber(a) {
     const [startYear] = a.date.split('-').map(Number);
+    
+    // Wenn in Grace Period, nutze das letzte Vorkommen
+    if (a.isInGracePeriod) {
+        const lastOcc = getLastOccurrence(a);
+        return lastOcc.getFullYear() - startYear;
+    }
+    
     const targetDate = getTargetDate(a);
     const targetYear = targetDate.getFullYear();
     return targetYear - startYear;
@@ -240,19 +318,21 @@ function renderAllAnniversaries() {
     c.innerHTML = '';
     evs.forEach((ev,i) => {
         const card = document.createElement('div');
-        card.className = 'anniversary-card';
+        card.className = 'anniversary-card' + (ev.isInGracePeriod ? ' card-celebrating' : '');
         card.style.animationDelay = `${i*0.1}s`;
         card.dataset.originalIndex = ev.originalIndex;
         card.onclick = () => openDetail(ev.originalIndex);
         
         const annivNum = getAnniversaryNumber(ev);
         const annivNumText = formatAnniversaryNumber(annivNum);
+        const celebratingBadge = ev.isInGracePeriod ? '<span class="celebrating-badge">🎉 Jetzt!</span>' : '';
         
         card.innerHTML = `
             <div class="event-name-container">
                 <h2 class="event-name"><span class="event-name-text">${ev.name}</span></h2>
             </div>
-            ${annivNumText ? `<span class="anniversary-number">${annivNumText}</span>` : ''}
+            ${celebratingBadge}
+            ${annivNumText && !ev.isInGracePeriod ? `<span class="anniversary-number">${annivNumText}</span>` : ''}
             <div class="countdown">${['days','hours','minutes','seconds'].map((u,j) => `
                 <div class="countdown-item ${u==='days'?'countdown-days':''} ${!visibleUnits[u]?'unit-hidden':''}">
                     <span class="countdown-number" data-${u}>${u==='days'?'000':'00'}</span>
@@ -782,12 +862,16 @@ function closeRelationshipConfig() { document.getElementById('relationship-modal
 window.closeRelationshipConfig = closeRelationshipConfig;
 function checkForCelebration() { 
     getAllUpcomingAnniversaries().forEach(ev => { 
-        const diff = ev.targetDate - new Date(); 
-        if (diff <= 0 && diff > -1000 && !confettiTriggered[ev.name]) { 
+        // Trigger confetti wenn ein Jahrestag gerade in die Grace Period eintritt (0-2 Sekunden vergangen)
+        if (ev.isInGracePeriod && ev.timeSinceLast >= 0 && ev.timeSinceLast < 2000 && !confettiTriggered[ev.name]) { 
             confettiTriggered[ev.name] = true; 
             triggerConfetti(); 
+            // Re-render um die Karten zu aktualisieren
+            renderAllAnniversaries();
             setTimeout(() => delete confettiTriggered[ev.name], 60000); 
         } 
+    }); 
+} 
     }); 
 }
 function triggerConfetti() {
