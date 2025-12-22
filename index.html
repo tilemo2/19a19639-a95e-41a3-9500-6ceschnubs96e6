@@ -288,19 +288,27 @@
 
     <!-- Photo Viewer Modal -->
     <div id="photo-viewer-modal" class="photo-viewer-modal hidden" onclick="closePhotoViewer()">
-        <div class="photo-viewer-content" onclick="event.stopPropagation()">
-            <button class="photo-nav photo-nav-left" onclick="navigatePhoto(-1)">‹</button>
-            <div class="photo-main">
-                <button class="photo-edit-btn" onclick="triggerPhotoUpload()">✏️</button>
-                <img id="photo-viewer-img" src="" alt="Erinnerung">
-                <input type="file" id="photo-viewer-upload" accept="image/*" onchange="updatePhotoFromViewer()" style="display:none;">
-            </div>
-            <button class="photo-nav photo-nav-right" onclick="navigatePhoto(1)">›</button>
-            <div class="photo-info">
+        <button class="photo-nav photo-nav-left" onclick="event.stopPropagation(); navigatePhoto(-1)">‹</button>
+        <button class="photo-nav photo-nav-right" onclick="event.stopPropagation(); navigatePhoto(1)">›</button>
+        <button class="photo-close" onclick="event.stopPropagation(); closePhotoViewer()">×</button>
+        
+        <div class="photo-viewer-scroll" onclick="event.stopPropagation()">
+            <div class="photo-viewer-content">
                 <div class="photo-year" id="photo-viewer-year">2024</div>
-                <textarea class="photo-note inset" id="photo-viewer-note" placeholder="Notiz hinzufügen..." oninput="savePhotoNote()"></textarea>
+                <div class="photo-main" id="photo-main">
+                    <img id="photo-viewer-img" src="" alt="Erinnerung">
+                    <div class="photo-placeholder hidden" id="photo-placeholder" onclick="triggerPhotoUpload()">
+                        <span class="placeholder-icon">📷</span>
+                        <span class="placeholder-text">Foto hinzufügen</span>
+                    </div>
+                    <button class="photo-edit-btn" id="photo-edit-btn" onclick="triggerPhotoUpload()">✏️</button>
+                    <input type="file" id="photo-viewer-upload" accept="image/*" onchange="updatePhotoFromViewer()" style="display:none;">
+                </div>
+                <div class="photo-note-section">
+                    <h3 class="photo-note-title">Notizen</h3>
+                    <textarea class="photo-note" id="photo-viewer-note" placeholder="Schreibe hier deine Erinnerungen, Gedanken oder was an diesem Tag passiert ist..." oninput="savePhotoNote()"></textarea>
+                </div>
             </div>
-            <button class="photo-close" onclick="closePhotoViewer()">×</button>
         </div>
     </div>
 
