@@ -77,11 +77,11 @@
         <section class="statistics-section">
             <h2 class="section-title">Statistiken</h2>
             <div class="statistics-container" id="statistics-container">
-                <div class="stat-card glass" id="relationship-stat">
-                    <div class="stat-icon">💕</div>
-                    <div class="stat-content">
+                <!-- Zusammen seit - volle Breite -->
+                <div class="stat-card glass stat-card-wide stat-relationship" id="relationship-stat">
+                    <div class="stat-relationship-content">
                         <div class="stat-label">Zusammen seit</div>
-                        <div class="stat-value" id="relationship-duration">-- Tage</div>
+                        <div class="stat-value-large" id="relationship-duration">-- Tage</div>
                         <div class="stat-sub" id="relationship-detail"></div>
                     </div>
                     <button class="stat-config-btn" onclick="openRelationshipConfig()">⚙️</button>
@@ -114,6 +114,15 @@
                     </div>
                 </div>
 
+                <div class="stat-card glass">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Ø Wartezeit</div>
+                        <div class="stat-value" id="avg-wait-days">-- Tage</div>
+                        <div class="stat-sub">bis zum nächsten</div>
+                    </div>
+                </div>
+
                 <div class="stat-card glass stat-card-wide">
                     <div class="stat-header">
                         <div class="stat-icon">📊</div>
@@ -122,29 +131,38 @@
                     <div class="month-chart" id="month-chart"></div>
                 </div>
 
-                <div class="stat-card glass stat-card-wide">
-                    <div class="stat-header">
-                        <div class="stat-icon">🏆</div>
-                        <div class="stat-label">Meilensteine</div>
-                    </div>
-                    <div class="milestones-container" id="milestones-container"></div>
-                </div>
-
                 <div class="stat-card glass">
                     <div class="stat-icon">🗓️</div>
                     <div class="stat-content">
                         <div class="stat-label">Diesen Monat</div>
                         <div class="stat-value" id="this-month-count">0</div>
-                        <div class="stat-sub" id="this-month-names"></div>
                     </div>
                 </div>
 
                 <div class="stat-card glass">
-                    <div class="stat-icon">🌸</div>
+                    <div class="stat-icon" id="season-icon">🌸</div>
                     <div class="stat-content">
-                        <div class="stat-label">Häufigste Saison</div>
+                        <div class="stat-label">Top Saison</div>
                         <div class="stat-value" id="top-season">--</div>
                         <div class="stat-sub" id="season-detail"></div>
+                    </div>
+                </div>
+
+                <!-- This month list -->
+                <div class="stat-card glass stat-card-wide">
+                    <div class="stat-header">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-label">Jahrestage diesen Monat</div>
+                    </div>
+                    <div class="this-month-list" id="this-month-list"></div>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Tage erfasst</div>
+                        <div class="stat-value" id="total-days-tracked">0</div>
+                        <div class="stat-sub">insgesamt</div>
                     </div>
                 </div>
             </div>
@@ -240,10 +258,18 @@
 
                 <div class="time-selector">
                     <label>Uhrzeit</label>
-                    <div class="time-inputs">
-                        <input type="number" id="picker-hour" min="0" max="23" value="0" onchange="clampTimeInput(this, 0, 23)">
-                        <span>:</span>
-                        <input type="number" id="picker-minute" min="0" max="59" value="0" onchange="clampTimeInput(this, 0, 59)">
+                    <div class="time-slot-machine">
+                        <div class="time-slot">
+                            <button class="slot-btn slot-up" onclick="changeHour(1)">▲</button>
+                            <div class="slot-value" id="picker-hour-display">00</div>
+                            <button class="slot-btn slot-down" onclick="changeHour(-1)">▼</button>
+                        </div>
+                        <span class="slot-separator">:</span>
+                        <div class="time-slot">
+                            <button class="slot-btn slot-up" onclick="changeMinute(1)">▲</button>
+                            <div class="slot-value" id="picker-minute-display">00</div>
+                            <button class="slot-btn slot-down" onclick="changeMinute(-1)">▼</button>
+                        </div>
                     </div>
                 </div>
             </div>
