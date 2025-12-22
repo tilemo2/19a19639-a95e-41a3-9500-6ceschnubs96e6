@@ -48,16 +48,27 @@ function showContent() {
     initApp();
 }
 function saveAnniversaries() { 
-    localStorage.setItem('anniversaries', JSON.stringify(anniversaries)); 
+    localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+    console.log('Saved to localStorage:', anniversaries.length, 'anniversaries');
 }
 function loadAnniversaries() {
     const s = localStorage.getItem('anniversaries');
     if (s) try { 
-        anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'})); 
+        anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'}));
+        console.log('Loaded from localStorage:', anniversaries.length, 'anniversaries');
+        console.log('Names:', anniversaries.map(a => a.name));
     } catch(e) {
         console.error('Error loading anniversaries:', e);
     }
 }
+
+// Debug-Funktion um alles zurückzusetzen (über Konsole aufrufbar)
+window.resetAllData = function() {
+    localStorage.removeItem('anniversaries');
+    localStorage.removeItem('settings');
+    anniversaries = [];
+    location.reload();
+};
 function saveSettings() {
     localStorage.setItem('settings', JSON.stringify({
         trail: currentTrailStyle, color: currentColor, units: visibleUnits,
@@ -594,19 +605,34 @@ function confirmDelete() {
     const inp = document.getElementById('delete-confirm-input');
     if (inp.value.trim() === inp.dataset.expectedName) { 
         const deletedName = anniversaries[currentDetailIndex].name;
+        console.log('Deleting anniversary:', deletedName, 'at index:', currentDetailIndex);
+        console.log('Before delete:', anniversaries.length, 'anniversaries');
+        
         // Entferne aus confettiTriggered falls vorhanden
         delete confettiTriggered[deletedName];
         
         // Reset Hero-Index damit er neu berechnet wird
         currentHeroAnniversaryIndex = null;
         
+        // Lösche den Jahrestag
         anniversaries.splice(currentDetailIndex, 1); 
+        
+        console.log('After delete:', anniversaries.length, 'anniversaries');
+        console.log('Remaining:', anniversaries.map(a => a.name));
+        
+        // Speichere sofort
         saveAnniversaries(); 
+        
+        // Schließe Modals
         document.getElementById('delete-modal').classList.add('hidden'); 
         closeDetail(); 
+        
+        // Komplett neu rendern
         renderAllAnniversaries(); 
         updateMainCountdown(); 
         updateStatistics(); 
+        
+        console.log('Delete complete, localStorage updated');
     }
     else { 
         inp.style.borderColor = 'var(--danger-color)'; 
