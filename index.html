@@ -72,8 +72,86 @@
         <section class="all-anniversaries-section">
             <div class="anniversaries-container" id="all-anniversaries"></div>
         </section>
+
+        <!-- Statistics Section -->
+        <section class="statistics-section">
+            <h2 class="section-title">Statistiken</h2>
+            <div class="statistics-container" id="statistics-container">
+                <div class="stat-card glass" id="relationship-stat">
+                    <div class="stat-icon">💕</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Zusammen seit</div>
+                        <div class="stat-value" id="relationship-duration">-- Tage</div>
+                        <div class="stat-sub" id="relationship-detail"></div>
+                    </div>
+                    <button class="stat-config-btn" onclick="openRelationshipConfig()">⚙️</button>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">🎉</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Nächster Jahrestag</div>
+                        <div class="stat-value" id="next-anniversary-name">--</div>
+                        <div class="stat-sub" id="next-anniversary-days">in -- Tagen</div>
+                    </div>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Jahrestage</div>
+                        <div class="stat-value" id="total-anniversaries">0</div>
+                        <div class="stat-sub" id="archived-count">0 archiviert</div>
+                    </div>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">📸</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Erinnerungen</div>
+                        <div class="stat-value" id="total-memories">0</div>
+                        <div class="stat-sub" id="memories-detail">0 Fotos, 0 Notizen</div>
+                    </div>
+                </div>
+
+                <div class="stat-card glass stat-card-wide">
+                    <div class="stat-header">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-label">Jahrestage pro Monat</div>
+                    </div>
+                    <div class="month-chart" id="month-chart"></div>
+                </div>
+
+                <div class="stat-card glass stat-card-wide">
+                    <div class="stat-header">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-label">Meilensteine</div>
+                    </div>
+                    <div class="milestones-container" id="milestones-container"></div>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">🗓️</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Diesen Monat</div>
+                        <div class="stat-value" id="this-month-count">0</div>
+                        <div class="stat-sub" id="this-month-names"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card glass">
+                    <div class="stat-icon">🌸</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Häufigste Saison</div>
+                        <div class="stat-value" id="top-season">--</div>
+                        <div class="stat-sub" id="season-detail"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
+    <!-- Detail Modal -->
     <div id="detail-modal" class="detail-modal hidden" onclick="closeOnBackdrop(event, 'detail-modal')">
         <div class="detail-card glass" onclick="event.stopPropagation()">
             <div class="detail-header">
@@ -82,7 +160,7 @@
                 </div>
                 <div class="detail-menu">
                     <button class="menu-dots" onclick="toggleDetailMenu(event)">⋯</button>
-                    <div class="detail-dropdown glass hidden">
+                    <div class="detail-dropdown hidden" id="detail-dropdown">
                         <div class="dropdown-option">
                             <label class="dropdown-toggle">
                                 <input type="checkbox" id="repeating-toggle" onchange="toggleRepeating()">
@@ -96,7 +174,7 @@
                 </div>
             </div>
 
-            <div class="detail-content">
+            <div class="detail-scroll-content" id="detail-scroll-content">
                 <div class="countdown detail-countdown" id="detail-countdown">
                     <div class="countdown-item countdown-days">
                         <span class="countdown-number" data-days>000</span>
@@ -119,16 +197,93 @@
                     </div>
                 </div>
                 
-                <input type="date" class="detail-date editable-field inset" id="detail-date">
+                <div class="datetime-picker">
+                    <div class="date-display inset" onclick="openDatePicker()">
+                        <span id="display-date">22.12.2024</span>
+                        <span class="time-separator">•</span>
+                        <span id="display-time">00:00</span>
+                    </div>
+                </div>
 
                 <div class="memories-section" id="memories-section">
                     <h3 class="memories-title">Erinnerungen</h3>
-                    <div class="memories-container" id="memories-container"></div>
+                    <div class="memories-grid" id="memories-container"></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Date Picker Modal -->
+    <div id="date-picker-modal" class="picker-modal hidden" onclick="closeOnBackdrop(event, 'date-picker-modal')">
+        <div class="picker-card glass" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <h3>Datum & Uhrzeit</h3>
+            </div>
+            <div class="picker-content">
+                <div class="year-selector">
+                    <button class="year-nav" onclick="changeYear(-1)">‹</button>
+                    <span class="year-display" id="picker-year">2024</span>
+                    <button class="year-nav" onclick="changeYear(1)">›</button>
+                </div>
+                
+                <div class="calendar-container">
+                    <div class="month-nav">
+                        <button onclick="changeMonth(-1)">‹</button>
+                        <span id="picker-month">Dezember</span>
+                        <button onclick="changeMonth(1)">›</button>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+                    </div>
+                    <div class="calendar-days" id="calendar-days"></div>
+                </div>
+
+                <div class="time-selector">
+                    <label>Uhrzeit</label>
+                    <div class="time-inputs">
+                        <input type="number" id="picker-hour" min="0" max="23" value="0" onchange="clampTimeInput(this, 0, 23)">
+                        <span>:</span>
+                        <input type="number" id="picker-minute" min="0" max="59" value="0" onchange="clampTimeInput(this, 0, 59)">
+                    </div>
+                </div>
+            </div>
+            <button class="btn-done raised" onclick="confirmDatePicker()">Fertig</button>
+        </div>
+    </div>
+
+    <!-- Photo Viewer Modal -->
+    <div id="photo-viewer-modal" class="photo-viewer-modal hidden" onclick="closePhotoViewer()">
+        <div class="photo-viewer-content" onclick="event.stopPropagation()">
+            <button class="photo-nav photo-nav-left" onclick="navigatePhoto(-1)">‹</button>
+            <div class="photo-main">
+                <button class="photo-edit-btn" onclick="triggerPhotoUpload()">✏️</button>
+                <img id="photo-viewer-img" src="" alt="Erinnerung">
+                <input type="file" id="photo-viewer-upload" accept="image/*" onchange="updatePhotoFromViewer()" style="display:none;">
+            </div>
+            <button class="photo-nav photo-nav-right" onclick="navigatePhoto(1)">›</button>
+            <div class="photo-info">
+                <div class="photo-year" id="photo-viewer-year">2024</div>
+                <textarea class="photo-note inset" id="photo-viewer-note" placeholder="Notiz hinzufügen..." oninput="savePhotoNote()"></textarea>
+            </div>
+            <button class="photo-close" onclick="closePhotoViewer()">×</button>
+        </div>
+    </div>
+
+    <!-- Relationship Config Modal -->
+    <div id="relationship-modal" class="picker-modal hidden" onclick="closeOnBackdrop(event, 'relationship-modal')">
+        <div class="picker-card glass" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <h3>Beziehungs-Jahrestag</h3>
+            </div>
+            <div class="picker-content">
+                <p class="picker-description">Wähle den Jahrestag, der den Beginn eurer Beziehung markiert:</p>
+                <div class="anniversary-select-list" id="anniversary-select-list"></div>
+            </div>
+            <button class="btn-done raised" onclick="closeRelationshipConfig()">Fertig</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
     <div id="settings-modal" class="settings hidden" onclick="closeOnBackdrop(event, 'settings-modal')">
         <div class="settings-card glass" onclick="event.stopPropagation()">
             <div class="settings-header">
@@ -139,130 +294,52 @@
                 <div class="setting-section">
                     <h3>Theme</h3>
                     <div class="theme-grid">
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="romantic" checked>
-                            <div class="theme-preview romantic-preview"></div>
-                            <span>Romantisch</span>
-                        </label>
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="ocean">
-                            <div class="theme-preview ocean-preview"></div>
-                            <span>Ozean</span>
-                        </label>
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="sunset">
-                            <div class="theme-preview sunset-preview"></div>
-                            <span>Sonnenuntergang</span>
-                        </label>
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="forest">
-                            <div class="theme-preview forest-preview"></div>
-                            <span>Wald</span>
-                        </label>
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="midnight">
-                            <div class="theme-preview midnight-preview"></div>
-                            <span>Mitternacht</span>
-                        </label>
-                        <label class="theme-card inset">
-                            <input type="radio" name="theme" value="pastel">
-                            <div class="theme-preview pastel-preview"></div>
-                            <span>Pastell</span>
-                        </label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="romantic" checked><div class="theme-preview romantic-preview"></div><span>Romantisch</span></label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="ocean"><div class="theme-preview ocean-preview"></div><span>Ozean</span></label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="sunset"><div class="theme-preview sunset-preview"></div><span>Sonnenuntergang</span></label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="forest"><div class="theme-preview forest-preview"></div><span>Wald</span></label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="midnight"><div class="theme-preview midnight-preview"></div><span>Mitternacht</span></label>
+                        <label class="theme-card inset"><input type="radio" name="theme" value="pastel"><div class="theme-preview pastel-preview"></div><span>Pastell</span></label>
                     </div>
                 </div>
 
                 <div class="setting-section">
                     <h3>Schriftart</h3>
                     <div class="option-grid">
-                        <label class="option-card inset">
-                            <input type="radio" name="font" value="system" checked>
-                            <span>System</span>
-                        </label>
-                        <label class="option-card inset">
-                            <input type="radio" name="font" value="serif">
-                            <span>Serif</span>
-                        </label>
-                        <label class="option-card inset">
-                            <input type="radio" name="font" value="mono">
-                            <span>Mono</span>
-                        </label>
+                        <label class="option-card inset"><input type="radio" name="font" value="system" checked><span>System</span></label>
+                        <label class="option-card inset"><input type="radio" name="font" value="serif"><span>Serif</span></label>
+                        <label class="option-card inset"><input type="radio" name="font" value="mono"><span>Mono</span></label>
                     </div>
                 </div>
 
                 <div class="setting-section">
                     <h3>Maus-Effekt</h3>
                     <div class="option-grid">
-                        <label class="option-card inset">
-                            <input type="radio" name="trail" value="hearts" checked>
-                            <span>❤️ Herzen</span>
-                        </label>
-                        <label class="option-card inset">
-                            <input type="radio" name="trail" value="sparks">
-                            <span>✨ Funken</span>
-                        </label>
-                        <label class="option-card inset">
-                            <input type="radio" name="trail" value="none">
-                            <span>Aus</span>
-                        </label>
+                        <label class="option-card inset"><input type="radio" name="trail" value="hearts" checked><span>❤️ Herzen</span></label>
+                        <label class="option-card inset"><input type="radio" name="trail" value="sparks"><span>✨ Funken</span></label>
+                        <label class="option-card inset"><input type="radio" name="trail" value="none"><span>Aus</span></label>
                     </div>
                 </div>
 
                 <div class="setting-section">
                     <h3>Herz-Farbe</h3>
                     <div class="color-grid">
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="red" checked>
-                            <span class="color-preview" style="background: linear-gradient(135deg, #ff6b9d, #ff8fa3);"></span>
-                            <span>Rot</span>
-                        </label>
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="pink">
-                            <span class="color-preview" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);"></span>
-                            <span>Rosa</span>
-                        </label>
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="purple">
-                            <span class="color-preview" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);"></span>
-                            <span>Lila</span>
-                        </label>
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="blue">
-                            <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);"></span>
-                            <span>Blau</span>
-                        </label>
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="gold">
-                            <span class="color-preview" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></span>
-                            <span>Gold</span>
-                        </label>
-                        <label class="color-option inset">
-                            <input type="radio" name="color" value="rainbow">
-                            <span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);"></span>
-                            <span>Regenbogen</span>
-                        </label>
+                        <label class="color-option inset"><input type="radio" name="color" value="red" checked><span class="color-preview" style="background: linear-gradient(135deg, #ff6b9d, #ff8fa3);"></span><span>Rot</span></label>
+                        <label class="color-option inset"><input type="radio" name="color" value="pink"><span class="color-preview" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);"></span><span>Rosa</span></label>
+                        <label class="color-option inset"><input type="radio" name="color" value="purple"><span class="color-preview" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);"></span><span>Lila</span></label>
+                        <label class="color-option inset"><input type="radio" name="color" value="blue"><span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2);"></span><span>Blau</span></label>
+                        <label class="color-option inset"><input type="radio" name="color" value="gold"><span class="color-preview" style="background: linear-gradient(135deg, #f093fb, #f5576c);"></span><span>Gold</span></label>
+                        <label class="color-option inset"><input type="radio" name="color" value="rainbow"><span class="color-preview" style="background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);"></span><span>Regenbogen</span></label>
                     </div>
                 </div>
 
                 <div class="setting-section">
                     <h3>Countdown-Einheiten</h3>
                     <div class="checkbox-grid">
-                        <label class="checkbox-card inset">
-                            <input type="checkbox" data-unit="days" checked>
-                            <span>Tage</span>
-                        </label>
-                        <label class="checkbox-card inset">
-                            <input type="checkbox" data-unit="hours" checked>
-                            <span>Std</span>
-                        </label>
-                        <label class="checkbox-card inset">
-                            <input type="checkbox" data-unit="minutes" checked>
-                            <span>Min</span>
-                        </label>
-                        <label class="checkbox-card inset">
-                            <input type="checkbox" data-unit="seconds" checked>
-                            <span>Sek</span>
-                        </label>
+                        <label class="checkbox-card inset"><input type="checkbox" data-unit="days" checked><span>Tage</span></label>
+                        <label class="checkbox-card inset"><input type="checkbox" data-unit="hours" checked><span>Std</span></label>
+                        <label class="checkbox-card inset"><input type="checkbox" data-unit="minutes" checked><span>Min</span></label>
+                        <label class="checkbox-card inset"><input type="checkbox" data-unit="seconds" checked><span>Sek</span></label>
                     </div>
                 </div>
 
@@ -278,6 +355,7 @@
         </div>
     </div>
 
+    <!-- Delete Confirm Modal -->
     <div id="delete-modal" class="confirm-modal hidden" onclick="closeOnBackdrop(event, 'delete-modal')">
         <div class="confirm-card glass" onclick="event.stopPropagation()">
             <h3>Jahrestag löschen?</h3>
