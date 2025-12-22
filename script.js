@@ -1,8 +1,18 @@
-// Token Hash
+// Token Hash für Zugang zur Seite
 const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253cbdf4afb297f";
-let anniversaries = [
-    { name: "Unser Jahrestag", date: "2024-02-14", time: "00:00", archived: false, repeating: true, memories: {} }
-];
+
+// GitHub Konfiguration - DIESE WERTE MUSST DU ANPASSEN!
+const GITHUB_CONFIG = {
+    owner: 'tilemo2',      // z.B. 'maxmustermann'
+    repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
+    path: 'data.json',                   // Datei wo die Daten gespeichert werden
+    token: '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'          // Personal Access Token (siehe Anleitung)
+};
+
+let anniversaries = [];
+let githubFileSha = null; // Wird benötigt für Updates
+let isSaving = false; // Verhindert mehrfaches gleichzeitiges Speichern
+let saveQueue = false; // Merkt sich ob gespeichert werden soll
 let emptyClickCount = 0, clickResetTimer = null, settingsOpenBuffer = false;
 let currentTrailStyle = 'hearts', currentColor = 'red';
 let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
@@ -48,17 +58,112 @@ function showContent() {
     initApp();
 }
 function saveAnniversaries() { 
+    // Speichere auch lokal als Backup
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-    console.log('Saved to localStorage:', anniversaries.length, 'anniversaries');
+    
+    // Speichere auf GitHub (mit Debouncing)
+    if (isSaving) {
+        saveQueue = true;
+        return;
+    }
+    saveToGitHub();
 }
-function loadAnniversaries() {
+
+async function saveToGitHub() {
+    if (GITHUB_CONFIG.token === 'DEIN_GITHUB_TOKEN') {
+        console.warn('GitHub Token nicht konfiguriert - nur lokale Speicherung');
+        return;
+    }
+    
+    isSaving = true;
+    
+    try {
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(anniversaries, null, 2))));
+        
+        const body = {
+            message: `Update anniversaries - ${new Date().toLocaleString('de-DE')}`,
+            content: content,
+            branch: 'main'
+        };
+        
+        // SHA wird benötigt wenn die Datei bereits existiert
+        if (githubFileSha) {
+            body.sha = githubFileSha;
+        }
+        
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body)
+            }
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            githubFileSha = data.content.sha;
+            console.log('✅ Auf GitHub gespeichert');
+        } else {
+            const error = await response.json();
+            console.error('❌ GitHub Speichern fehlgeschlagen:', error.message);
+        }
+    } catch (e) {
+        console.error('❌ GitHub Fehler:', e);
+    }
+    
+    isSaving = false;
+    
+    // Falls während dem Speichern weitere Änderungen kamen
+    if (saveQueue) {
+        saveQueue = false;
+        setTimeout(saveToGitHub, 1000);
+    }
+}
+
+async function loadAnniversaries() {
+    // Versuche zuerst von GitHub zu laden
+    if (GITHUB_CONFIG.token !== 'DEIN_GITHUB_TOKEN') {
+        try {
+            const response = await fetch(
+                `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+                {
+                    headers: {
+                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                    }
+                }
+            );
+            
+            if (response.ok) {
+                const data = await response.json();
+                githubFileSha = data.sha;
+                const content = decodeURIComponent(escape(atob(data.content)));
+                anniversaries = JSON.parse(content).map(a => ({...a, time: a.time || '00:00'}));
+                console.log('✅ Von GitHub geladen:', anniversaries.length, 'Jahrestage');
+                // Auch lokal speichern als Backup
+                localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+                return;
+            } else if (response.status === 404) {
+                console.log('📁 data.json existiert noch nicht auf GitHub - wird bei erstem Speichern erstellt');
+            }
+        } catch (e) {
+            console.error('GitHub Laden fehlgeschlagen:', e);
+        }
+    }
+    
+    // Fallback: Von localStorage laden
     const s = localStorage.getItem('anniversaries');
-    if (s) try { 
-        anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'}));
-        console.log('Loaded from localStorage:', anniversaries.length, 'anniversaries');
-        console.log('Names:', anniversaries.map(a => a.name));
-    } catch(e) {
-        console.error('Error loading anniversaries:', e);
+    if (s) {
+        try { 
+            anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'}));
+            console.log('📦 Von localStorage geladen:', anniversaries.length, 'Jahrestage');
+        } catch(e) {
+            console.error('Error loading anniversaries:', e);
+        }
     }
 }
 
@@ -98,8 +203,12 @@ function loadSettings() {
         applyVisibleUnits();
     } catch(e) {}
 }
-function initApp() {
-    loadAnniversaries(); 
+async function initApp() {
+    // Zeige Ladezustand
+    document.getElementById('main-name-scroll').textContent = 'Lädt...';
+    
+    // Lade Daten von GitHub (async)
+    await loadAnniversaries(); 
     loadSettings();
     updateMainCountdown(); 
     renderAllAnniversaries(); 
@@ -605,8 +714,6 @@ function confirmDelete() {
     const inp = document.getElementById('delete-confirm-input');
     if (inp.value.trim() === inp.dataset.expectedName) { 
         const deletedName = anniversaries[currentDetailIndex].name;
-        console.log('Deleting anniversary:', deletedName, 'at index:', currentDetailIndex);
-        console.log('Before delete:', anniversaries.length, 'anniversaries');
         
         // Entferne aus confettiTriggered falls vorhanden
         delete confettiTriggered[deletedName];
@@ -617,10 +724,7 @@ function confirmDelete() {
         // Lösche den Jahrestag
         anniversaries.splice(currentDetailIndex, 1); 
         
-        console.log('After delete:', anniversaries.length, 'anniversaries');
-        console.log('Remaining:', anniversaries.map(a => a.name));
-        
-        // Speichere sofort
+        // Speichere (lokal + GitHub)
         saveAnniversaries(); 
         
         // Schließe Modals
@@ -631,8 +735,6 @@ function confirmDelete() {
         renderAllAnniversaries(); 
         updateMainCountdown(); 
         updateStatistics(); 
-        
-        console.log('Delete complete, localStorage updated');
     }
     else { 
         inp.style.borderColor = 'var(--danger-color)'; 
