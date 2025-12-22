@@ -145,6 +145,15 @@ function applyVisibleUnits() {
     });
     renderAllAnniversaries();
 }
+/*
+ * COUNTDOWN-LOGIK:
+ * 1. Jeder Jahrestag wiederholt jährlich (unabhängig von repeating-Flag)
+ * 2. Wenn Countdown 0 erreicht: Confetti-Animation + Grace Period beginnt
+ * 3. Grace Period (12h): Kachel bleibt vorne, zählt rückwärts (-00:01:30 etc.)
+ * 4. Nach Grace Period: Jahrestag ordnet sich hinten ein, zählt zum nächsten Jahr
+ * 5. repeating-Flag bestimmt nur, ob mehrere Jahres-Erinnerungen möglich sind
+ */
+
 function getTargetDate(a) {
     const [y,m,d] = a.date.split('-').map(Number);
     const [h,min] = (a.time||'00:00').split(':').map(Number);
@@ -698,7 +707,18 @@ function renderMemories() {
     const c = document.getElementById('memories-container');
     const [startY] = a.date.split('-').map(Number);
     const curY = new Date().getFullYear();
-    const years = a.repeating ? Array.from({length: curY-startY+1}, (_,i) => curY-i) : [startY];
+    
+    // Bei repeating: zeige alle Jahre vom Start bis jetzt
+    // Bei nicht-repeating: zeige nur das Startjahr
+    let years;
+    if (a.repeating) {
+        // Erstelle Array von aktuellem Jahr rückwärts bis zum Startjahr
+        const numYears = Math.max(1, curY - startY + 1);
+        years = Array.from({length: numYears}, (_,i) => curY - i);
+    } else {
+        years = [startY];
+    }
+    
     photoViewerYears = years;
     c.innerHTML = years.map(y => {
         const m = a.memories[y] || {};
@@ -870,8 +890,6 @@ function checkForCelebration() {
             renderAllAnniversaries();
             setTimeout(() => delete confettiTriggered[ev.name], 60000); 
         } 
-    }); 
-} 
     }); 
 }
 function triggerConfetti() {
