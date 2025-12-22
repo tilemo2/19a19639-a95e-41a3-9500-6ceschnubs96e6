@@ -148,13 +148,24 @@ function applyVisibleUnits() {
 function getTargetDate(a) {
     const [y,m,d] = a.date.split('-').map(Number);
     const [h,min] = (a.time||'00:00').split(':').map(Number);
-    if (a.repeating) {
-        const now = new Date(), ty = now.getFullYear();
-        const thisY = new Date(ty, m-1, d, h, min);
-        const nextY = new Date(ty+1, m-1, d, h, min);
-        return thisY > now ? thisY : nextY;
-    }
-    return new Date(y, m-1, d, h, min);
+    
+    // ALLE Jahrestage wiederholen jährlich für den Countdown
+    // Das "repeating"-Flag bestimmt nur, ob man mehrere Jahres-Erinnerungen hat
+    const now = new Date(), ty = now.getFullYear();
+    const thisY = new Date(ty, m-1, d, h, min);
+    const nextY = new Date(ty+1, m-1, d, h, min);
+    return thisY > now ? thisY : nextY;
+}
+
+// Hole alle Jahrestage für die Anzeige
+function getAllAnniversariesForDisplay() {
+    const now = new Date();
+    return anniversaries.filter(a => !a.archived).map((a) => ({ 
+        ...a, 
+        targetDate: getTargetDate(a), 
+        diff: getTargetDate(a) - now, 
+        originalIndex: anniversaries.indexOf(a)
+    })).sort((a,b) => a.diff - b.diff);
 }
 function getAllUpcomingAnniversaries() {
     const now = new Date();
@@ -184,9 +195,9 @@ function updateMainCountdown() {
 }
 function updateAllCountdowns() {
     const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
-    const evs = getAllUpcomingAnniversaries().filter(e => e.diff > 0);
+    const evs = getAllAnniversariesForDisplay().slice(1);
     cards.forEach((c,i) => { 
-        if (evs[i+1]) updateCountdownDisplayForCard(c, evs[i+1]); 
+        if (evs[i]) updateCountdownDisplayForCard(c, evs[i]); 
     });
 }
 function updateCountdownDisplayForCard(card, ev) {
@@ -206,7 +217,8 @@ function formatDateDisplay(date, time) {
 }
 function renderAllAnniversaries() {
     const c = document.getElementById('all-anniversaries');
-    const evs = getAllUpcomingAnniversaries().filter(e => e.diff > 0).slice(1);
+    const evs = getAllAnniversariesForDisplay().slice(1); // Erste ist im Hero-Bereich
+    
     c.innerHTML = '';
     evs.forEach((ev,i) => {
         const card = document.createElement('div');
@@ -214,13 +226,15 @@ function renderAllAnniversaries() {
         card.style.animationDelay = `${i*0.1}s`;
         card.dataset.originalIndex = ev.originalIndex;
         card.onclick = () => openDetail(ev.originalIndex);
+        
         card.innerHTML = `<h2 class="event-name">${ev.name}</h2>
             <div class="countdown">${['days','hours','minutes','seconds'].map((u,j) => `
                 <div class="countdown-item ${u==='days'?'countdown-days':''} ${!visibleUnits[u]?'unit-hidden':''}">
                     <span class="countdown-number" data-${u}>${u==='days'?'000':'00'}</span>
                     <span class="countdown-label">${u==='days'?'Tage':u==='hours'?'Std':u==='minutes'?'Min':'Sek'}</span>
                 </div>${j<3?`<div class="countdown-separator ${!visibleUnits[['hours','minutes','seconds'][j]]?'sep-hidden':''}">:</div>`:''}`).join('')}
-            </div><p class="event-date">${formatDateDisplay(ev.date, ev.time)}</p>`;
+            </div>
+            <p class="event-date">${formatDateDisplay(ev.date, ev.time)}</p>`;
         c.appendChild(card);
         updateCountdownDisplayForCard(card, ev);
     });
@@ -236,7 +250,7 @@ function createNewAnniversary() {
         date: new Date().toISOString().split('T')[0], 
         time: "00:00", 
         archived: false, 
-        repeating: false, 
+        repeating: false,  // Standardmäßig einmalig (nur eine Erinnerung)
         memories: {} 
     });
     saveAnniversaries(); 
