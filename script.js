@@ -16,6 +16,7 @@ let currentColor = 'red';
 let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
 let currentDetailIndex = null;
 let confettiTriggered = {};
+let isNewAnniversary = false;
 
 // Color Schemes
 const colorSchemes = {
@@ -122,6 +123,7 @@ function initApp() {
     initScrollIndicator();
     initEasterEgg();
     initSettingsHandlers();
+    initDetailInputHandlers();
 }
 
 function initScrollIndicator() {
@@ -177,6 +179,24 @@ function initSettingsHandlers() {
     });
 }
 
+function initDetailInputHandlers() {
+    document.getElementById('detail-name').addEventListener('input', () => {
+        if (currentDetailIndex === null) return;
+        anniversaries[currentDetailIndex].name = document.getElementById('detail-name').value;
+        saveAnniversaries();
+        renderAllAnniversaries();
+        updateMainCountdown();
+    });
+    document.getElementById('detail-date').addEventListener('change', () => {
+        if (currentDetailIndex === null) return;
+        anniversaries[currentDetailIndex].date = document.getElementById('detail-date').value;
+        saveAnniversaries();
+        renderAllAnniversaries();
+        updateMainCountdown();
+        renderMemories();
+    });
+}
+
 function applyFont(font) {
     document.body.classList.remove('font-serif', 'font-mono');
     if (font === 'serif') document.body.classList.add('font-serif');
@@ -199,7 +219,6 @@ function applyVisibleUnits() {
     renderAllAnniversaries();
 }
 
-// Helper
 window.generateTokenHash = async function(token) {
     const hash = await hashToken(token);
     console.log('Token:', token);
@@ -207,12 +226,12 @@ window.generateTokenHash = async function(token) {
     return hash;
 };
 
-// Init on load
 document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(async () => { await checkAccess(); }, 500);
 });
 
 console.log('🍎 Anniversary App geladen');
+
 // Countdown Logic
 function getAllUpcomingAnniversaries() {
     const today = new Date();
@@ -322,20 +341,33 @@ function renderAllAnniversaries() {
         container.appendChild(card);
         updateCountdownDisplayForCard(card, event);
     });
+    
     const addCard = document.createElement('div');
     addCard.className = 'anniversary-card add-card';
     addCard.innerHTML = `<div class="add-content"><span class="add-plus">+</span><span class="add-text">Jahrestag hinzufügen</span></div>`;
     addCard.addEventListener('click', (e) => {
         e.stopPropagation();
-        const name = prompt('Name des Jahrestags:');
-        if (!name) return;
-        const date = prompt('Datum (YYYY-MM-DD):');
-        if (!date) return;
-        anniversaries.push({ name, date, archived: false, repeating: true, memories: {} });
-        saveAnniversaries();
-        renderAllAnniversaries();
+        createNewAnniversary();
     });
     container.appendChild(addCard);
+}
+
+function createNewAnniversary() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const newAnniversary = {
+        name: "Neuer Jahrestag",
+        date: dateStr,
+        archived: false,
+        repeating: true,
+        memories: {}
+    };
+    anniversaries.push(newAnniversary);
+    saveAnniversaries();
+    renderAllAnniversaries();
+    updateMainCountdown();
+    isNewAnniversary = true;
+    openDetail(anniversaries.length - 1);
 }
 
 // Trail
@@ -384,7 +416,6 @@ function initMouseTrail() {
     }
     resize();
     window.addEventListener('resize', resize);
-    let lastMoveTime = 0;
     document.addEventListener('mousemove', (e) => {
         if (currentTrailStyle === 'none') return;
         for (let i = 0; i < 2; i++) {
@@ -414,9 +445,7 @@ function initBackground() {
     }
     resize();
     window.addEventListener('resize', resize);
-    let hue = 0;
     function draw() {
-        const theme = document.body.getAttribute('data-theme') || 'romantic';
         const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
         const start = getComputedStyle(document.body).getPropertyValue('--bg-start');
         const mid = getComputedStyle(document.body).getPropertyValue('--bg-mid');
@@ -430,12 +459,15 @@ function initBackground() {
     }
     draw();
 }
+
 // Modals
 function closeOnBackdrop(event, modalId) {
     if (event.target.id === modalId) {
         document.getElementById(modalId).classList.add('hidden');
+        document.body.classList.remove('modal-open');
         if (modalId === 'detail-modal') {
             currentDetailIndex = null;
+            isNewAnniversary = false;
             document.querySelector('.detail-dropdown')?.classList.add('hidden');
         }
     }
@@ -445,8 +477,12 @@ window.closeOnBackdrop = closeOnBackdrop;
 function openSettings() {
     renderArchivedList();
     document.getElementById('settings-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
 }
-function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
+function closeSettings() { 
+    document.getElementById('settings-modal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
+}
 window.openSettings = openSettings;
 window.closeSettings = closeSettings;
 
@@ -457,7 +493,7 @@ function renderArchivedList() {
         list.innerHTML = '<p class="empty-state">Keine archivierten Jahrestage</p>';
         return;
     }
-    list.innerHTML = archived.map((item, index) => `
+    list.innerHTML = archived.map((item) => `
         <div class="archived-item glass">
             <div><div style="font-weight:500;">${item.name}</div><div style="font-size:13px;color:var(--text-secondary);">${formatDate(item.date)}</div></div>
             <button onclick="unarchiveAnniversary(${anniversaries.indexOf(item)})">Wiederherstellen</button>
@@ -470,6 +506,7 @@ function unarchiveAnniversary(index) {
     saveAnniversaries();
     renderArchivedList();
     renderAllAnniversaries();
+    updateMainCountdown();
 }
 window.unarchiveAnniversary = unarchiveAnniversary;
 
@@ -490,26 +527,26 @@ function openDetail(index) {
     document.getElementById('detail-date').value = anniversary.date;
     document.getElementById('repeating-toggle').checked = anniversary.repeating !== false;
     document.getElementById('detail-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
     updateDetailCountdown();
     renderMemories();
     
-    document.getElementById('detail-name').addEventListener('input', () => {
-        anniversaries[currentDetailIndex].name = document.getElementById('detail-name').value;
-        saveAnniversaries();
-        renderAllAnniversaries();
-    });
-    document.getElementById('detail-date').addEventListener('change', () => {
-        anniversaries[currentDetailIndex].date = document.getElementById('detail-date').value;
-        saveAnniversaries();
-        renderAllAnniversaries();
-    });
+    if (isNewAnniversary) {
+        setTimeout(() => {
+            const nameInput = document.getElementById('detail-name');
+            nameInput.focus();
+            nameInput.select();
+        }, 100);
+    }
 }
 window.openDetail = openDetail;
 
 function closeDetail() {
     document.getElementById('detail-modal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
     document.querySelector('.detail-dropdown')?.classList.add('hidden');
     currentDetailIndex = null;
+    isNewAnniversary = false;
 }
 window.closeDetail = closeDetail;
 
@@ -519,9 +556,11 @@ function toggleDetailMenu(e) {
     dropdown.classList.toggle('hidden');
     if (!dropdown.classList.contains('hidden')) {
         setTimeout(() => {
-            document.addEventListener('click', function closeDropdown() {
-                dropdown.classList.add('hidden');
-                document.removeEventListener('click', closeDropdown);
+            document.addEventListener('click', function closeDropdown(evt) {
+                if (!evt.target.closest('.detail-dropdown') && !evt.target.closest('.menu-dots')) {
+                    dropdown.classList.add('hidden');
+                    document.removeEventListener('click', closeDropdown);
+                }
             });
         }, 0);
     }
@@ -534,6 +573,7 @@ function archiveAnniversary() {
     saveAnniversaries();
     closeDetail();
     renderAllAnniversaries();
+    updateMainCountdown();
 }
 window.archiveAnniversary = archiveAnniversary;
 
@@ -546,7 +586,9 @@ function deleteAnniversary() {
 }
 window.deleteAnniversary = deleteAnniversary;
 
-function cancelDelete() { document.getElementById('delete-modal').classList.add('hidden'); }
+function cancelDelete() { 
+    document.getElementById('delete-modal').classList.add('hidden'); 
+}
 window.cancelDelete = cancelDelete;
 
 function confirmDelete() {
@@ -558,6 +600,7 @@ function confirmDelete() {
         document.getElementById('delete-modal').classList.add('hidden');
         closeDetail();
         renderAllAnniversaries();
+        updateMainCountdown();
     } else {
         input.style.borderColor = 'var(--danger-color)';
         setTimeout(() => { input.style.borderColor = ''; }, 500);
@@ -594,6 +637,8 @@ function toggleRepeating() {
     anniversaries[currentDetailIndex].repeating = document.getElementById('repeating-toggle').checked;
     saveAnniversaries();
     renderMemories();
+    renderAllAnniversaries();
+    updateMainCountdown();
 }
 window.toggleRepeating = toggleRepeating;
 
@@ -605,8 +650,24 @@ function renderMemories() {
     const container = document.getElementById('memories-container');
     const currentYear = new Date().getFullYear();
     const startYear = new Date(anniversary.date).getFullYear();
-    const years = anniversary.repeating ? Array.from({ length: currentYear - startYear + 1 }, (_, i) => currentYear - i) : [startYear];
-    container.innerHTML = years.map(year => {
+    
+    let years;
+    if (anniversary.repeating) {
+        years = Array.from({ length: currentYear - startYear + 1 }, (_, i) => currentYear - i);
+    } else {
+        years = [startYear];
+    }
+    
+    const yearsWithContent = years.filter(year => {
+        const memory = anniversary.memories[year];
+        return memory && (memory.note || memory.image);
+    });
+    
+    const yearsToShow = anniversary.repeating 
+        ? [...new Set([...yearsWithContent, currentYear, startYear])].sort((a, b) => b - a)
+        : [startYear];
+    
+    container.innerHTML = yearsToShow.map(year => {
         const memory = anniversary.memories[year] || { note: '', image: '' };
         return `
             <div class="memory-year glass inset">
