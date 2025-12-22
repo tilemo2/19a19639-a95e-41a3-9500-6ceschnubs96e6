@@ -33,31 +33,33 @@
     <div id="content" class="hidden">
         <section class="hero-section">
             <div class="countdown-container">
-                <h1 class="event-name clickable-main" id="event-name" onclick="openMainDetail()">
-                    <span class="scrolling-text" id="main-name-scroll">Nächster Jahrestag</span>
-                </h1>
-                <div class="countdown main-countdown clickable-main" id="countdown" onclick="openMainDetail()">
-                    <div class="countdown-item countdown-days">
-                        <span class="countdown-number" id="days">000</span>
-                        <span class="countdown-label">Tage</span>
+                <div class="main-event-wrapper clickable-main" id="main-event-wrapper" onclick="openMainDetail()">
+                    <h1 class="event-name" id="event-name">
+                        <span class="scrolling-text" id="main-name-scroll">Nächster Jahrestag</span>
+                    </h1>
+                    <div class="countdown main-countdown" id="countdown">
+                        <div class="countdown-item countdown-days">
+                            <span class="countdown-number" id="days">000</span>
+                            <span class="countdown-label">Tage</span>
+                        </div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="hours">00</span>
+                            <span class="countdown-label">Std</span>
+                        </div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="minutes">00</span>
+                            <span class="countdown-label">Min</span>
+                        </div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-item">
+                            <span class="countdown-number" id="seconds">00</span>
+                            <span class="countdown-label">Sek</span>
+                        </div>
                     </div>
-                    <div class="countdown-separator">:</div>
-                    <div class="countdown-item">
-                        <span class="countdown-number" id="hours">00</span>
-                        <span class="countdown-label">Std</span>
-                    </div>
-                    <div class="countdown-separator">:</div>
-                    <div class="countdown-item">
-                        <span class="countdown-number" id="minutes">00</span>
-                        <span class="countdown-label">Min</span>
-                    </div>
-                    <div class="countdown-separator">:</div>
-                    <div class="countdown-item">
-                        <span class="countdown-number" id="seconds">00</span>
-                        <span class="countdown-label">Sek</span>
-                    </div>
+                    <p class="event-date" id="event-date">14. Februar 2024</p>
                 </div>
-                <p class="event-date" id="event-date">14. Februar 2024</p>
             </div>
             
             <div class="scroll-indicator">
@@ -74,19 +76,27 @@
 
     <div id="detail-modal" class="detail-modal hidden" onclick="closeOnBackdrop(event, 'detail-modal')">
         <div class="detail-card glass" onclick="event.stopPropagation()">
-            <div class="detail-menu">
-                <button class="menu-dots" onclick="toggleDetailMenu(event)">⋯</button>
-                <div class="detail-dropdown glass hidden">
-                    <button onclick="archiveAnniversary()">Archivieren</button>
-                    <button onclick="deleteAnniversary()" class="danger">Löschen</button>
+            <div class="detail-header">
+                <div class="detail-name-wrapper">
+                    <input type="text" class="detail-name editable-field inset" id="detail-name" placeholder="Name des Events">
+                </div>
+                <div class="detail-menu">
+                    <button class="menu-dots" onclick="toggleDetailMenu(event)">⋯</button>
+                    <div class="detail-dropdown glass hidden">
+                        <div class="dropdown-option">
+                            <label class="dropdown-toggle">
+                                <input type="checkbox" id="repeating-toggle" onchange="toggleRepeating()">
+                                <span>Jährlich wiederholen</span>
+                            </label>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <button onclick="archiveAnniversary()">Archivieren</button>
+                        <button onclick="deleteAnniversary()" class="danger">Löschen</button>
+                    </div>
                 </div>
             </div>
 
             <div class="detail-content">
-                <div class="detail-name-wrapper">
-                    <input type="text" class="detail-name editable-field inset" id="detail-name" placeholder="Name des Events">
-                </div>
-                
                 <div class="countdown detail-countdown" id="detail-countdown">
                     <div class="countdown-item countdown-days">
                         <span class="countdown-number" data-days>000</span>
@@ -110,13 +120,6 @@
                 </div>
                 
                 <input type="date" class="detail-date editable-field inset" id="detail-date">
-
-                <div class="repeating-toggle">
-                    <label class="toggle-label inset">
-                        <input type="checkbox" id="repeating-toggle" onchange="toggleRepeating()">
-                        <span class="toggle-text">Jährlich wiederholen</span>
-                    </label>
-                </div>
 
                 <div class="memories-section" id="memories-section">
                     <h3 class="memories-title">Erinnerungen</h3>
