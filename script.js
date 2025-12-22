@@ -567,6 +567,10 @@ window.cancelDelete = cancelDelete;
 function confirmDelete() {
     const inp = document.getElementById('delete-confirm-input');
     if (inp.value.trim() === inp.dataset.expectedName) { 
+        const deletedName = anniversaries[currentDetailIndex].name;
+        // Entferne aus confettiTriggered falls vorhanden
+        delete confettiTriggered[deletedName];
+        
         anniversaries.splice(currentDetailIndex, 1); 
         saveAnniversaries(); 
         document.getElementById('delete-modal').classList.add('hidden'); 
@@ -743,13 +747,21 @@ function updatePhotoViewer() {
     const m = anniversaries[currentDetailIndex].memories[y] || {};
     document.getElementById('photo-viewer-year').textContent = y;
     document.getElementById('photo-viewer-note').value = m.note || '';
+    
     const img = document.getElementById('photo-viewer-img');
+    const placeholder = document.getElementById('photo-placeholder');
+    const editBtn = document.getElementById('photo-edit-btn');
+    
     if (m.image) { 
         img.src = m.image; 
-        img.style.display = 'block'; 
+        img.style.display = 'block';
+        placeholder.classList.add('hidden');
+        editBtn.classList.remove('hidden');
     } else { 
         img.src = ''; 
-        img.style.display = 'none'; 
+        img.style.display = 'none';
+        placeholder.classList.remove('hidden');
+        editBtn.classList.add('hidden');
     }
 }
 function navigatePhoto(d) { 
