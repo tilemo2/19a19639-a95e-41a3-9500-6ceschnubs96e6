@@ -41,10 +41,16 @@ function showContent() {
     document.getElementById('content').classList.remove('hidden');
     initApp();
 }
-function saveAnniversaries() { localStorage.setItem('anniversaries', JSON.stringify(anniversaries)); }
+function saveAnniversaries() { 
+    localStorage.setItem('anniversaries', JSON.stringify(anniversaries)); 
+}
 function loadAnniversaries() {
     const s = localStorage.getItem('anniversaries');
-    if (s) try { anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'})); } catch(e) {}
+    if (s) try { 
+        anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'})); 
+    } catch(e) {
+        console.error('Error loading anniversaries:', e);
+    }
 }
 function saveSettings() {
     localStorage.setItem('settings', JSON.stringify({
@@ -76,15 +82,23 @@ function loadSettings() {
     } catch(e) {}
 }
 function initApp() {
-    loadAnniversaries(); loadSettings();
-    updateMainCountdown(); renderAllAnniversaries(); updateStatistics();
+    loadAnniversaries(); 
+    loadSettings();
+    updateMainCountdown(); 
+    renderAllAnniversaries(); 
+    updateStatistics();
     setInterval(() => {
-        updateMainCountdown(); updateAllCountdowns();
+        updateMainCountdown(); 
+        updateAllCountdowns();
         if (currentDetailIndex !== null) updateDetailCountdown();
         checkForCelebration();
     }, 1000);
-    initBackground(); initMouseTrail(); initScrollIndicator(); initEasterEgg();
-    initSettingsHandlers(); initDetailInputHandlers();
+    initBackground(); 
+    initMouseTrail(); 
+    initScrollIndicator(); 
+    initEasterEgg();
+    initSettingsHandlers(); 
+    initDetailInputHandlers();
 }
 function initScrollIndicator() {
     const si = document.querySelector('.scroll-indicator');
@@ -117,7 +131,10 @@ function initDetailInputHandlers() {
     document.getElementById('detail-name').addEventListener('input', () => {
         if (currentDetailIndex === null) return;
         anniversaries[currentDetailIndex].name = document.getElementById('detail-name').value;
-        saveAnniversaries(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics();
+        saveAnniversaries(); 
+        renderAllAnniversaries(); 
+        updateMainCountdown(); 
+        updateStatistics();
     });
 }
 function applyFont(f) { document.body.classList.remove('font-serif','font-mono'); if (f !== 'system') document.body.classList.add('font-' + f); }
@@ -141,11 +158,20 @@ function getTargetDate(a) {
 }
 function getAllUpcomingAnniversaries() {
     const now = new Date();
-    return anniversaries.filter(a => !a.archived).map((a,i) => ({ ...a, targetDate: getTargetDate(a), diff: getTargetDate(a) - now, originalIndex: i })).sort((a,b) => a.diff - b.diff);
+    return anniversaries.filter(a => !a.archived).map((a,i) => ({ 
+        ...a, 
+        targetDate: getTargetDate(a), 
+        diff: getTargetDate(a) - now, 
+        originalIndex: anniversaries.indexOf(a)
+    })).sort((a,b) => a.diff - b.diff);
 }
 function updateMainCountdown() {
     const ev = getAllUpcomingAnniversaries().find(e => e.diff > 0);
-    if (!ev) { document.getElementById('main-name-scroll').textContent = 'Kein Jahrestag'; return; }
+    if (!ev) { 
+        document.getElementById('main-name-scroll').textContent = 'Kein Jahrestag'; 
+        document.getElementById('event-date').textContent = '';
+        return; 
+    }
     const diff = ev.targetDate - new Date();
     const days = Math.floor(diff / 86400000), hours = Math.floor((diff % 86400000) / 3600000);
     const mins = Math.floor((diff % 3600000) / 60000), secs = Math.floor((diff % 60000) / 1000);
@@ -153,14 +179,15 @@ function updateMainCountdown() {
     document.getElementById('hours').textContent = hours.toString().padStart(2,'0');
     document.getElementById('minutes').textContent = mins.toString().padStart(2,'0');
     document.getElementById('seconds').textContent = secs.toString().padStart(2,'0');
-    const n = document.getElementById('main-name-scroll');
-    n.textContent = ev.name;
+    document.getElementById('main-name-scroll').textContent = ev.name;
     document.getElementById('event-date').textContent = formatDateDisplay(ev.date, ev.time);
 }
 function updateAllCountdowns() {
     const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
     const evs = getAllUpcomingAnniversaries().filter(e => e.diff > 0);
-    cards.forEach((c,i) => { if (evs[i+1]) updateCountdownDisplayForCard(c, evs[i+1]); });
+    cards.forEach((c,i) => { 
+        if (evs[i+1]) updateCountdownDisplayForCard(c, evs[i+1]); 
+    });
 }
 function updateCountdownDisplayForCard(card, ev) {
     const diff = ev.targetDate - new Date();
@@ -185,6 +212,7 @@ function renderAllAnniversaries() {
         const card = document.createElement('div');
         card.className = 'anniversary-card';
         card.style.animationDelay = `${i*0.1}s`;
+        card.dataset.originalIndex = ev.originalIndex;
         card.onclick = () => openDetail(ev.originalIndex);
         card.innerHTML = `<h2 class="event-name">${ev.name}</h2>
             <div class="countdown">${['days','hours','minutes','seconds'].map((u,j) => `
@@ -203,9 +231,20 @@ function renderAllAnniversaries() {
     c.appendChild(add);
 }
 function createNewAnniversary() {
-    anniversaries.push({ name: "Neuer Jahrestag", date: new Date().toISOString().split('T')[0], time: "00:00", archived: false, repeating: false, memories: {} });
-    saveAnniversaries(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics();
-    isNewAnniversary = true; openDetail(anniversaries.length - 1);
+    anniversaries.push({ 
+        name: "Neuer Jahrestag", 
+        date: new Date().toISOString().split('T')[0], 
+        time: "00:00", 
+        archived: false, 
+        repeating: false, 
+        memories: {} 
+    });
+    saveAnniversaries(); 
+    renderAllAnniversaries(); 
+    updateMainCountdown(); 
+    updateStatistics();
+    isNewAnniversary = true; 
+    openDetail(anniversaries.length - 1);
 }
 function spawnTrailElement(x, y) {
     if (currentTrailStyle === 'none') return;
@@ -248,7 +287,11 @@ function closeOnBackdrop(e, id) {
     if (e.target.id === id) {
         document.getElementById(id).classList.add('hidden');
         document.body.classList.remove('modal-open');
-        if (id === 'detail-modal') { currentDetailIndex = null; isNewAnniversary = false; document.getElementById('detail-dropdown')?.classList.add('hidden'); }
+        if (id === 'detail-modal') { 
+            currentDetailIndex = null; 
+            isNewAnniversary = false; 
+            document.getElementById('detail-dropdown')?.classList.add('hidden'); 
+        }
     }
 }
 window.closeOnBackdrop = closeOnBackdrop;
@@ -268,9 +311,19 @@ function openArchivedDetail(i) {
     setTimeout(() => openDetail(i), 100);
 }
 window.openArchivedDetail = openArchivedDetail;
-function unarchiveAnniversary(i) { anniversaries[i].archived = false; saveAnniversaries(); renderArchivedList(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); }
+function unarchiveAnniversary(i) { 
+    anniversaries[i].archived = false; 
+    saveAnniversaries(); 
+    renderArchivedList(); 
+    renderAllAnniversaries(); 
+    updateMainCountdown(); 
+    updateStatistics(); 
+}
 window.unarchiveAnniversary = unarchiveAnniversary;
-function openMainDetail() { const ev = getAllUpcomingAnniversaries().find(e => e.diff > 0); if (ev) openDetail(ev.originalIndex); }
+function openMainDetail() { 
+    const ev = getAllUpcomingAnniversaries().find(e => e.diff > 0); 
+    if (ev) openDetail(ev.originalIndex); 
+}
 window.openMainDetail = openMainDetail;
 function openDetail(i) {
     currentDetailIndex = i;
@@ -280,43 +333,86 @@ function openDetail(i) {
     updateDateDisplay();
     document.getElementById('detail-modal').classList.remove('hidden');
     document.body.classList.add('modal-open');
-    updateDetailCountdown(); renderMemories();
-    if (isNewAnniversary) setTimeout(() => { const n = document.getElementById('detail-name'); n.focus(); n.select(); }, 100);
+    updateDetailCountdown(); 
+    renderMemories();
+    if (isNewAnniversary) setTimeout(() => { 
+        const n = document.getElementById('detail-name'); 
+        n.focus(); 
+        n.select(); 
+    }, 100);
 }
 window.openDetail = openDetail;
 function updateDateDisplay() {
     if (currentDetailIndex === null) return;
-    const a = anniversaries[currentDetailIndex], [y,m,d] = a.date.split('-');
+    const a = anniversaries[currentDetailIndex];
+    const [y,m,d] = a.date.split('-');
     document.getElementById('display-date').textContent = `${d}.${m}.${y}`;
     document.getElementById('display-time').textContent = a.time || '00:00';
 }
-function closeDetail() { document.getElementById('detail-modal').classList.add('hidden'); document.body.classList.remove('modal-open'); document.getElementById('detail-dropdown')?.classList.add('hidden'); currentDetailIndex = null; isNewAnniversary = false; }
+function closeDetail() { 
+    document.getElementById('detail-modal').classList.add('hidden'); 
+    document.body.classList.remove('modal-open'); 
+    document.getElementById('detail-dropdown')?.classList.add('hidden'); 
+    currentDetailIndex = null; 
+    isNewAnniversary = false; 
+}
 window.closeDetail = closeDetail;
 function toggleDetailMenu(e) {
     e.stopPropagation();
     const dd = document.getElementById('detail-dropdown');
     dd.classList.toggle('hidden');
     if (!dd.classList.contains('hidden')) {
-        const close = ev => { if (!dd.contains(ev.target) && !ev.target.closest('.menu-dots')) { dd.classList.add('hidden'); document.removeEventListener('click', close); } };
+        const close = ev => { 
+            if (!dd.contains(ev.target) && !ev.target.closest('.menu-dots')) { 
+                dd.classList.add('hidden'); 
+                document.removeEventListener('click', close); 
+            } 
+        };
         setTimeout(() => document.addEventListener('click', close), 0);
     }
 }
 window.toggleDetailMenu = toggleDetailMenu;
-function archiveAnniversary() { if (currentDetailIndex === null) return; anniversaries[currentDetailIndex].archived = true; saveAnniversaries(); closeDetail(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); }
+function archiveAnniversary() { 
+    if (currentDetailIndex === null) return; 
+    anniversaries[currentDetailIndex].archived = true; 
+    saveAnniversaries(); 
+    closeDetail(); 
+    renderAllAnniversaries(); 
+    updateMainCountdown(); 
+    updateStatistics(); 
+}
 window.archiveAnniversary = archiveAnniversary;
-function deleteAnniversary() { if (currentDetailIndex === null) return; document.getElementById('delete-confirm-input').value = ''; document.getElementById('delete-confirm-input').dataset.expectedName = anniversaries[currentDetailIndex].name; document.getElementById('delete-modal').classList.remove('hidden'); }
+function deleteAnniversary() { 
+    if (currentDetailIndex === null) return; 
+    document.getElementById('delete-confirm-input').value = ''; 
+    document.getElementById('delete-confirm-input').dataset.expectedName = anniversaries[currentDetailIndex].name; 
+    document.getElementById('delete-modal').classList.remove('hidden'); 
+}
 window.deleteAnniversary = deleteAnniversary;
 function cancelDelete() { document.getElementById('delete-modal').classList.add('hidden'); }
 window.cancelDelete = cancelDelete;
 function confirmDelete() {
     const inp = document.getElementById('delete-confirm-input');
-    if (inp.value.trim() === inp.dataset.expectedName) { anniversaries.splice(currentDetailIndex, 1); saveAnniversaries(); document.getElementById('delete-modal').classList.add('hidden'); closeDetail(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); }
-    else { inp.style.borderColor = 'var(--danger-color)'; setTimeout(() => inp.style.borderColor = '', 500); }
+    if (inp.value.trim() === inp.dataset.expectedName) { 
+        anniversaries.splice(currentDetailIndex, 1); 
+        saveAnniversaries(); 
+        document.getElementById('delete-modal').classList.add('hidden'); 
+        closeDetail(); 
+        renderAllAnniversaries(); 
+        updateMainCountdown(); 
+        updateStatistics(); 
+    }
+    else { 
+        inp.style.borderColor = 'var(--danger-color)'; 
+        setTimeout(() => inp.style.borderColor = '', 500); 
+    }
 }
 window.confirmDelete = confirmDelete;
 function updateDetailCountdown() {
     if (currentDetailIndex === null) return;
-    const diff = getTargetDate(anniversaries[currentDetailIndex]) - new Date();
+    const a = anniversaries[currentDetailIndex];
+    if (!a) return;
+    const diff = getTargetDate(a) - new Date();
     if (diff < 0) return;
     const cd = document.getElementById('detail-countdown');
     cd.querySelector('[data-days]').textContent = Math.floor(diff/86400000).toString().padStart(3,'0');
@@ -324,12 +420,26 @@ function updateDetailCountdown() {
     cd.querySelector('[data-minutes]').textContent = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
     cd.querySelector('[data-seconds]').textContent = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
 }
-function toggleRepeating() { if (currentDetailIndex === null) return; anniversaries[currentDetailIndex].repeating = document.getElementById('repeating-toggle').checked; saveAnniversaries(); renderMemories(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); }
+function toggleRepeating() { 
+    if (currentDetailIndex === null) return; 
+    anniversaries[currentDetailIndex].repeating = document.getElementById('repeating-toggle').checked; 
+    saveAnniversaries(); 
+    renderMemories(); 
+    renderAllAnniversaries(); 
+    updateMainCountdown(); 
+    updateStatistics(); 
+}
 window.toggleRepeating = toggleRepeating;
 function openDatePicker() {
     if (currentDetailIndex === null) return;
-    const a = anniversaries[currentDetailIndex], [y,m,d] = a.date.split('-').map(Number), [h,min] = (a.time||'00:00').split(':').map(Number);
-    pickerYear = y; pickerMonth = m-1; pickerDay = d; pickerHour = h; pickerMinute = min;
+    const a = anniversaries[currentDetailIndex];
+    const [y,m,d] = a.date.split('-').map(Number);
+    const [h,min] = (a.time||'00:00').split(':').map(Number);
+    pickerYear = y; 
+    pickerMonth = m-1; 
+    pickerDay = d; 
+    pickerHour = h; 
+    pickerMinute = min;
     document.getElementById('picker-year').textContent = pickerYear;
     updateTimeDisplay();
     renderCalendar();
@@ -350,32 +460,85 @@ function changeMinute(d) {
     updateTimeDisplay();
 }
 window.changeMinute = changeMinute;
-function changeYear(d) { pickerYear += d; document.getElementById('picker-year').textContent = pickerYear; renderCalendar(); }
+function changeYear(d) { 
+    pickerYear += d; 
+    document.getElementById('picker-year').textContent = pickerYear; 
+    renderCalendar(); 
+}
 window.changeYear = changeYear;
-function changeMonth(d) { pickerMonth += d; if (pickerMonth < 0) { pickerMonth = 11; pickerYear--; } if (pickerMonth > 11) { pickerMonth = 0; pickerYear++; } document.getElementById('picker-year').textContent = pickerYear; renderCalendar(); }
+function changeMonth(d) { 
+    pickerMonth += d; 
+    if (pickerMonth < 0) { pickerMonth = 11; pickerYear--; } 
+    if (pickerMonth > 11) { pickerMonth = 0; pickerYear++; } 
+    document.getElementById('picker-year').textContent = pickerYear; 
+    renderCalendar(); 
+}
 window.changeMonth = changeMonth;
 function renderCalendar() {
     document.getElementById('picker-month').textContent = monthNames[pickerMonth];
-    const c = document.getElementById('calendar-days'); c.innerHTML = '';
-    const first = new Date(pickerYear, pickerMonth, 1), last = new Date(pickerYear, pickerMonth+1, 0);
-    const start = (first.getDay()+6)%7, prev = new Date(pickerYear, pickerMonth, 0);
-    for (let i = start-1; i >= 0; i--) { const b = document.createElement('button'); b.className = 'calendar-day other-month'; b.textContent = prev.getDate()-i; c.appendChild(b); }
-    for (let d = 1; d <= last.getDate(); d++) { const b = document.createElement('button'); b.className = 'calendar-day' + (d===pickerDay?' selected':''); b.textContent = d; b.onclick = () => { pickerDay = d; renderCalendar(); }; c.appendChild(b); }
-    for (let i = 1; c.children.length < 42; i++) { const b = document.createElement('button'); b.className = 'calendar-day other-month'; b.textContent = i; c.appendChild(b); }
+    const c = document.getElementById('calendar-days'); 
+    c.innerHTML = '';
+    const first = new Date(pickerYear, pickerMonth, 1);
+    const last = new Date(pickerYear, pickerMonth+1, 0);
+    const start = (first.getDay()+6)%7;
+    const prev = new Date(pickerYear, pickerMonth, 0);
+    for (let i = start-1; i >= 0; i--) { 
+        const b = document.createElement('button'); 
+        b.className = 'calendar-day other-month'; 
+        b.textContent = prev.getDate()-i; 
+        c.appendChild(b); 
+    }
+    for (let d = 1; d <= last.getDate(); d++) { 
+        const b = document.createElement('button'); 
+        b.className = 'calendar-day' + (d===pickerDay?' selected':''); 
+        b.textContent = d; 
+        b.onclick = () => { pickerDay = d; renderCalendar(); }; 
+        c.appendChild(b); 
+    }
+    for (let i = 1; c.children.length < 42; i++) { 
+        const b = document.createElement('button'); 
+        b.className = 'calendar-day other-month'; 
+        b.textContent = i; 
+        c.appendChild(b); 
+    }
 }
 function confirmDatePicker() {
     if (currentDetailIndex === null) return;
+    
+    // Update the anniversary data
     anniversaries[currentDetailIndex].date = `${pickerYear}-${String(pickerMonth+1).padStart(2,'0')}-${String(pickerDay).padStart(2,'0')}`;
     anniversaries[currentDetailIndex].time = `${String(pickerHour).padStart(2,'0')}:${String(pickerMinute).padStart(2,'0')}`;
-    saveAnniversaries(); updateDateDisplay(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); renderMemories();
+    
+    // Save to localStorage
+    saveAnniversaries(); 
+    
+    // Update the detail view display
+    updateDateDisplay(); 
+    updateDetailCountdown();
+    
+    // Update the cards/tiles view
+    renderAllAnniversaries(); 
+    
+    // Update main countdown (in case the order changed)
+    updateMainCountdown(); 
+    
+    // Update statistics
+    updateStatistics(); 
+    
+    // Update memories for the new date
+    renderMemories();
+    
+    // Close the date picker
     document.getElementById('date-picker-modal').classList.add('hidden');
 }
 window.confirmDatePicker = confirmDatePicker;
 function renderMemories() {
     if (currentDetailIndex === null) return;
-    const a = anniversaries[currentDetailIndex]; if (!a.memories) a.memories = {};
+    const a = anniversaries[currentDetailIndex]; 
+    if (!a.memories) a.memories = {};
     const c = document.getElementById('memories-container');
-    const [startY] = a.date.split('-').map(Number), curY = new Date().getFullYear();
+    const [startY] = a.date.split('-').map(Number);
+    const curY = new Date().getFullYear();
     const years = a.repeating ? Array.from({length: curY-startY+1}, (_,i) => curY-i) : [startY];
     photoViewerYears = years;
     c.innerHTML = years.map(y => {
@@ -385,33 +548,50 @@ function renderMemories() {
 }
 function openPhotoViewer(y) {
     if (currentDetailIndex === null) return;
-    photoViewerCurrentIndex = photoViewerYears.indexOf(y); if (photoViewerCurrentIndex < 0) photoViewerCurrentIndex = 0;
+    photoViewerCurrentIndex = photoViewerYears.indexOf(y); 
+    if (photoViewerCurrentIndex < 0) photoViewerCurrentIndex = 0;
     updatePhotoViewer();
     document.getElementById('photo-viewer-modal').classList.remove('hidden');
 }
 window.openPhotoViewer = openPhotoViewer;
 function updatePhotoViewer() {
-    const y = photoViewerYears[photoViewerCurrentIndex], m = anniversaries[currentDetailIndex].memories[y] || {};
+    const y = photoViewerYears[photoViewerCurrentIndex];
+    const m = anniversaries[currentDetailIndex].memories[y] || {};
     document.getElementById('photo-viewer-year').textContent = y;
     document.getElementById('photo-viewer-note').value = m.note || '';
     const img = document.getElementById('photo-viewer-img');
-    if (m.image) { img.src = m.image; img.style.display = 'block'; } else { img.src = ''; img.style.display = 'none'; }
+    if (m.image) { 
+        img.src = m.image; 
+        img.style.display = 'block'; 
+    } else { 
+        img.src = ''; 
+        img.style.display = 'none'; 
+    }
 }
-function navigatePhoto(d) { photoViewerCurrentIndex = (photoViewerCurrentIndex + d + photoViewerYears.length) % photoViewerYears.length; updatePhotoViewer(); }
+function navigatePhoto(d) { 
+    photoViewerCurrentIndex = (photoViewerCurrentIndex + d + photoViewerYears.length) % photoViewerYears.length; 
+    updatePhotoViewer(); 
+}
 window.navigatePhoto = navigatePhoto;
-function closePhotoViewer() { document.getElementById('photo-viewer-modal').classList.add('hidden'); renderMemories(); }
+function closePhotoViewer() { 
+    document.getElementById('photo-viewer-modal').classList.add('hidden'); 
+    renderMemories(); 
+}
 window.closePhotoViewer = closePhotoViewer;
 function triggerPhotoUpload() { document.getElementById('photo-viewer-upload').click(); }
 window.triggerPhotoUpload = triggerPhotoUpload;
 function updatePhotoFromViewer() {
     const file = document.getElementById('photo-viewer-upload').files[0];
     if (!file || currentDetailIndex === null) return;
-    const y = photoViewerYears[photoViewerCurrentIndex], reader = new FileReader();
+    const y = photoViewerYears[photoViewerCurrentIndex];
+    const reader = new FileReader();
     reader.onload = e => {
         if (!anniversaries[currentDetailIndex].memories) anniversaries[currentDetailIndex].memories = {};
         if (!anniversaries[currentDetailIndex].memories[y]) anniversaries[currentDetailIndex].memories[y] = {};
         anniversaries[currentDetailIndex].memories[y].image = e.target.result;
-        saveAnniversaries(); updatePhotoViewer(); updateStatistics();
+        saveAnniversaries(); 
+        updatePhotoViewer(); 
+        updateStatistics();
     };
     reader.readAsDataURL(file);
 }
@@ -426,13 +606,22 @@ function savePhotoNote() {
 }
 window.savePhotoNote = savePhotoNote;
 function updateStatistics() {
-    const active = anniversaries.filter(a => !a.archived), archived = anniversaries.filter(a => a.archived);
+    const active = anniversaries.filter(a => !a.archived);
+    const archived = anniversaries.filter(a => a.archived);
     document.getElementById('total-anniversaries').textContent = active.length;
     document.getElementById('archived-count').textContent = `${archived.length} archiviert`;
     const upcoming = getAllUpcomingAnniversaries().filter(e => e.diff > 0);
-    if (upcoming[0]) { document.getElementById('next-anniversary-name').textContent = upcoming[0].name; document.getElementById('next-anniversary-days').textContent = `in ${Math.ceil(upcoming[0].diff/86400000)} Tagen`; }
+    if (upcoming[0]) { 
+        document.getElementById('next-anniversary-name').textContent = upcoming[0].name; 
+        document.getElementById('next-anniversary-days').textContent = `in ${Math.ceil(upcoming[0].diff/86400000)} Tagen`; 
+    }
     let photos = 0, notes = 0;
-    anniversaries.forEach(a => { if (a.memories) Object.values(a.memories).forEach(m => { if (m.image) photos++; if (m.note) notes++; }); });
+    anniversaries.forEach(a => { 
+        if (a.memories) Object.values(a.memories).forEach(m => { 
+            if (m.image) photos++; 
+            if (m.note) notes++; 
+        }); 
+    });
     document.getElementById('total-memories').textContent = photos + notes;
     document.getElementById('memories-detail').textContent = `${photos} Fotos, ${notes} Notizen`;
     updateRelationshipStat();
@@ -441,14 +630,21 @@ function updateStatistics() {
     const max = Math.max(...mc, 1);
     document.getElementById('month-chart').innerHTML = mc.map((c,i) => `<div class="month-bar"><div class="month-bar-fill" style="height:${c/max*80}px"></div><span class="month-bar-label">${monthNamesShort[i]}</span></div>`).join('');
     // This month with list
-    const cm = new Date().getMonth(), tm = active.filter(a => parseInt(a.date.split('-')[1])-1 === cm);
+    const cm = new Date().getMonth();
+    const tm = active.filter(a => parseInt(a.date.split('-')[1])-1 === cm);
     document.getElementById('this-month-count').textContent = tm.length;
     const tmList = document.getElementById('this-month-list');
     if (tmList) tmList.innerHTML = tm.length ? tm.map(a => `<div class="this-month-item">${a.name} - ${a.date.split('-')[2]}.${a.date.split('-')[1]}</div>`).join('') : '<span style="color:var(--text-secondary)">Keine Jahrestage</span>';
     // Season with icons
     const seasons = {'Frühling':0,'Sommer':0,'Herbst':0,'Winter':0};
     const seasonIcons = {'Frühling':'🌸','Sommer':'☀️','Herbst':'🍂','Winter':'❄️'};
-    active.forEach(a => { const m = parseInt(a.date.split('-')[1]); if (m>=3&&m<=5) seasons['Frühling']++; else if (m>=6&&m<=8) seasons['Sommer']++; else if (m>=9&&m<=11) seasons['Herbst']++; else seasons['Winter']++; });
+    active.forEach(a => { 
+        const m = parseInt(a.date.split('-')[1]); 
+        if (m>=3&&m<=5) seasons['Frühling']++; 
+        else if (m>=6&&m<=8) seasons['Sommer']++; 
+        else if (m>=9&&m<=11) seasons['Herbst']++; 
+        else seasons['Winter']++; 
+    });
     const top = Object.entries(seasons).sort((a,b) => b[1]-a[1])[0];
     document.getElementById('season-icon').textContent = seasonIcons[top[0]];
     document.getElementById('top-season').textContent = top[0];
@@ -469,8 +665,13 @@ function updateStatistics() {
     document.getElementById('total-days-tracked').textContent = totalDaysTracked.toLocaleString();
 }
 function updateRelationshipStat() {
-    if (relationshipAnniversaryIndex === null || !anniversaries[relationshipAnniversaryIndex]) { document.getElementById('relationship-duration').textContent = 'Nicht konfiguriert'; document.getElementById('relationship-detail').textContent = 'Tippe auf ⚙️'; return; }
-    const start = new Date(anniversaries[relationshipAnniversaryIndex].date), days = Math.floor((new Date() - start) / 86400000);
+    if (relationshipAnniversaryIndex === null || !anniversaries[relationshipAnniversaryIndex]) { 
+        document.getElementById('relationship-duration').textContent = 'Nicht konfiguriert'; 
+        document.getElementById('relationship-detail').textContent = 'Tippe auf ⚙️'; 
+        return; 
+    }
+    const start = new Date(anniversaries[relationshipAnniversaryIndex].date);
+    const days = Math.floor((new Date() - start) / 86400000);
     document.getElementById('relationship-duration').textContent = `${days} Tage`;
     const y = Math.floor(days/365), m = Math.floor((days%365)/30);
     document.getElementById('relationship-detail').textContent = y > 0 ? `${y} Jahre, ${m} Monate` : `${m} Monate`;
@@ -484,22 +685,62 @@ function openRelationshipConfig() {
     document.getElementById('relationship-modal').classList.remove('hidden');
 }
 window.openRelationshipConfig = openRelationshipConfig;
-function selectRelationshipAnniversary(i) { relationshipAnniversaryIndex = i; saveSettings(); updateStatistics(); document.querySelectorAll('.anniversary-select-item').forEach(el => el.classList.toggle('selected', parseInt(el.getAttribute('onclick').match(/\d+/)[0]) === i)); }
+function selectRelationshipAnniversary(i) { 
+    relationshipAnniversaryIndex = i; 
+    saveSettings(); 
+    updateStatistics(); 
+    document.querySelectorAll('.anniversary-select-item').forEach(el => el.classList.toggle('selected', parseInt(el.getAttribute('onclick').match(/\d+/)[0]) === i)); 
+}
 window.selectRelationshipAnniversary = selectRelationshipAnniversary;
 function closeRelationshipConfig() { document.getElementById('relationship-modal').classList.add('hidden'); }
 window.closeRelationshipConfig = closeRelationshipConfig;
-function checkForCelebration() { getAllUpcomingAnniversaries().forEach(ev => { const diff = ev.targetDate - new Date(); if (diff <= 0 && diff > -1000 && !confettiTriggered[ev.name]) { confettiTriggered[ev.name] = true; triggerConfetti(); setTimeout(() => delete confettiTriggered[ev.name], 60000); } }); }
+function checkForCelebration() { 
+    getAllUpcomingAnniversaries().forEach(ev => { 
+        const diff = ev.targetDate - new Date(); 
+        if (diff <= 0 && diff > -1000 && !confettiTriggered[ev.name]) { 
+            confettiTriggered[ev.name] = true; 
+            triggerConfetti(); 
+            setTimeout(() => delete confettiTriggered[ev.name], 60000); 
+        } 
+    }); 
+}
 function triggerConfetti() {
     const canvas = document.getElementById('confetti-canvas'), ctx = canvas.getContext('2d');
     canvas.width = innerWidth; canvas.height = innerHeight;
-    const ps = Array.from({length:150}, () => ({x:Math.random()*canvas.width,y:-20,vx:(Math.random()-0.5)*4,vy:Math.random()*2+2,color:`hsl(${Math.random()*360},70%,60%)`,size:Math.random()*8+4,rot:Math.random()*360,rs:(Math.random()-0.5)*10}));
+    const ps = Array.from({length:150}, () => ({
+        x:Math.random()*canvas.width,
+        y:-20,
+        vx:(Math.random()-0.5)*4,
+        vy:Math.random()*2+2,
+        color:`hsl(${Math.random()*360},70%,60%)`,
+        size:Math.random()*8+4,
+        rot:Math.random()*360,
+        rs:(Math.random()-0.5)*10
+    }));
     (function animate() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
         let active = false;
-        ps.forEach(p => { p.vy += 0.1; p.y += p.vy; p.x += p.vx; p.rot += p.rs; if (p.y < canvas.height+20) active = true; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180); ctx.fillStyle = p.color; ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); ctx.restore(); });
-        if (active) requestAnimationFrame(animate); else ctx.clearRect(0,0,canvas.width,canvas.height);
+        ps.forEach(p => { 
+            p.vy += 0.1; 
+            p.y += p.vy; 
+            p.x += p.vx; 
+            p.rot += p.rs; 
+            if (p.y < canvas.height+20) active = true; 
+            ctx.save(); 
+            ctx.translate(p.x,p.y); 
+            ctx.rotate(p.rot*Math.PI/180); 
+            ctx.fillStyle = p.color; 
+            ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); 
+            ctx.restore(); 
+        });
+        if (active) requestAnimationFrame(animate); 
+        else ctx.clearRect(0,0,canvas.width,canvas.height);
     })();
 }
-window.generateTokenHash = async t => { const h = await hashToken(t); console.log('Token:',t,'Hash:',h); return h; };
+window.generateTokenHash = async t => { 
+    const h = await hashToken(t); 
+    console.log('Token:',t,'Hash:',h); 
+    return h; 
+};
 document.addEventListener('DOMContentLoaded', () => setTimeout(checkAccess, 500));
 console.log('🍎 Anniversary App geladen');
