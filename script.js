@@ -203,7 +203,7 @@ function renderAllAnniversaries() {
     c.appendChild(add);
 }
 function createNewAnniversary() {
-    anniversaries.push({ name: "Neuer Jahrestag", date: new Date().toISOString().split('T')[0], time: "00:00", archived: false, repeating: true, memories: {} });
+    anniversaries.push({ name: "Neuer Jahrestag", date: new Date().toISOString().split('T')[0], time: "00:00", archived: false, repeating: false, memories: {} });
     saveAnniversaries(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics();
     isNewAnniversary = true; openDetail(anniversaries.length - 1);
 }
@@ -258,8 +258,16 @@ window.openSettings = openSettings; window.closeSettings = closeSettings;
 function renderArchivedList() {
     const list = document.getElementById('archived-list');
     const arch = anniversaries.filter(a => a.archived);
-    list.innerHTML = arch.length ? arch.map(a => `<div class="archived-item"><div><div style="font-weight:500">${a.name}</div><div style="font-size:13px;color:var(--text-secondary)">${formatDateDisplay(a.date,a.time)}</div></div><button onclick="unarchiveAnniversary(${anniversaries.indexOf(a)})">Wiederherstellen</button></div>`).join('') : '<p class="empty-state">Keine archivierten Jahrestage</p>';
+    list.innerHTML = arch.length ? arch.map(a => {
+        const idx = anniversaries.indexOf(a);
+        return `<div class="archived-item" onclick="openArchivedDetail(${idx})" style="cursor:pointer"><div><div style="font-weight:500">${a.name}</div><div style="font-size:13px;color:var(--text-secondary)">${formatDateDisplay(a.date,a.time)}</div></div><button onclick="event.stopPropagation();unarchiveAnniversary(${idx})">Wiederherstellen</button></div>`;
+    }).join('') : '<p class="empty-state">Keine archivierten Jahrestage</p>';
 }
+function openArchivedDetail(i) {
+    closeSettings();
+    setTimeout(() => openDetail(i), 100);
+}
+window.openArchivedDetail = openArchivedDetail;
 function unarchiveAnniversary(i) { anniversaries[i].archived = false; saveAnniversaries(); renderArchivedList(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); }
 window.unarchiveAnniversary = unarchiveAnniversary;
 function openMainDetail() { const ev = getAllUpcomingAnniversaries().find(e => e.diff > 0); if (ev) openDetail(ev.originalIndex); }
@@ -323,12 +331,25 @@ function openDatePicker() {
     const a = anniversaries[currentDetailIndex], [y,m,d] = a.date.split('-').map(Number), [h,min] = (a.time||'00:00').split(':').map(Number);
     pickerYear = y; pickerMonth = m-1; pickerDay = d; pickerHour = h; pickerMinute = min;
     document.getElementById('picker-year').textContent = pickerYear;
-    document.getElementById('picker-hour').value = pickerHour;
-    document.getElementById('picker-minute').value = pickerMinute;
+    updateTimeDisplay();
     renderCalendar();
     document.getElementById('date-picker-modal').classList.remove('hidden');
 }
 window.openDatePicker = openDatePicker;
+function updateTimeDisplay() {
+    document.getElementById('picker-hour-display').textContent = String(pickerHour).padStart(2,'0');
+    document.getElementById('picker-minute-display').textContent = String(pickerMinute).padStart(2,'0');
+}
+function changeHour(d) {
+    pickerHour = (pickerHour + d + 24) % 24;
+    updateTimeDisplay();
+}
+window.changeHour = changeHour;
+function changeMinute(d) {
+    pickerMinute = (pickerMinute + d + 60) % 60;
+    updateTimeDisplay();
+}
+window.changeMinute = changeMinute;
 function changeYear(d) { pickerYear += d; document.getElementById('picker-year').textContent = pickerYear; renderCalendar(); }
 window.changeYear = changeYear;
 function changeMonth(d) { pickerMonth += d; if (pickerMonth < 0) { pickerMonth = 11; pickerYear--; } if (pickerMonth > 11) { pickerMonth = 0; pickerYear++; } document.getElementById('picker-year').textContent = pickerYear; renderCalendar(); }
@@ -342,12 +363,8 @@ function renderCalendar() {
     for (let d = 1; d <= last.getDate(); d++) { const b = document.createElement('button'); b.className = 'calendar-day' + (d===pickerDay?' selected':''); b.textContent = d; b.onclick = () => { pickerDay = d; renderCalendar(); }; c.appendChild(b); }
     for (let i = 1; c.children.length < 42; i++) { const b = document.createElement('button'); b.className = 'calendar-day other-month'; b.textContent = i; c.appendChild(b); }
 }
-function clampTimeInput(inp, min, max) { let v = parseInt(inp.value)||0; inp.value = Math.max(min, Math.min(max, v)); }
-window.clampTimeInput = clampTimeInput;
 function confirmDatePicker() {
     if (currentDetailIndex === null) return;
-    pickerHour = parseInt(document.getElementById('picker-hour').value)||0;
-    pickerMinute = parseInt(document.getElementById('picker-minute').value)||0;
     anniversaries[currentDetailIndex].date = `${pickerYear}-${String(pickerMonth+1).padStart(2,'0')}-${String(pickerDay).padStart(2,'0')}`;
     anniversaries[currentDetailIndex].time = `${String(pickerHour).padStart(2,'0')}:${String(pickerMinute).padStart(2,'0')}`;
     saveAnniversaries(); updateDateDisplay(); renderAllAnniversaries(); updateMainCountdown(); updateStatistics(); renderMemories();
@@ -423,15 +440,33 @@ function updateStatistics() {
     active.forEach(a => mc[parseInt(a.date.split('-')[1])-1]++);
     const max = Math.max(...mc, 1);
     document.getElementById('month-chart').innerHTML = mc.map((c,i) => `<div class="month-bar"><div class="month-bar-fill" style="height:${c/max*80}px"></div><span class="month-bar-label">${monthNamesShort[i]}</span></div>`).join('');
+    // This month with list
     const cm = new Date().getMonth(), tm = active.filter(a => parseInt(a.date.split('-')[1])-1 === cm);
     document.getElementById('this-month-count').textContent = tm.length;
-    document.getElementById('this-month-names').textContent = tm.slice(0,2).map(a => a.name).join(', ') || '-';
+    const tmList = document.getElementById('this-month-list');
+    if (tmList) tmList.innerHTML = tm.length ? tm.map(a => `<div class="this-month-item">${a.name} - ${a.date.split('-')[2]}.${a.date.split('-')[1]}</div>`).join('') : '<span style="color:var(--text-secondary)">Keine Jahrestage</span>';
+    // Season with icons
     const seasons = {'Frühling':0,'Sommer':0,'Herbst':0,'Winter':0};
+    const seasonIcons = {'Frühling':'🌸','Sommer':'☀️','Herbst':'🍂','Winter':'❄️'};
     active.forEach(a => { const m = parseInt(a.date.split('-')[1]); if (m>=3&&m<=5) seasons['Frühling']++; else if (m>=6&&m<=8) seasons['Sommer']++; else if (m>=9&&m<=11) seasons['Herbst']++; else seasons['Winter']++; });
     const top = Object.entries(seasons).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById('season-icon').textContent = seasonIcons[top[0]];
     document.getElementById('top-season').textContent = top[0];
     document.getElementById('season-detail').textContent = `${top[1]} Jahrestage`;
-    updateMilestones();
+    // Average wait time
+    if (upcoming.length > 0) {
+        const totalWait = upcoming.reduce((sum, e) => sum + e.diff, 0);
+        const avgDays = Math.round(totalWait / upcoming.length / 86400000);
+        document.getElementById('avg-wait-days').textContent = `${avgDays} Tage`;
+    } else {
+        document.getElementById('avg-wait-days').textContent = '-';
+    }
+    // Fun stats
+    const totalDaysTracked = active.reduce((sum, a) => {
+        const start = new Date(a.date);
+        return sum + Math.max(0, Math.floor((new Date() - start) / 86400000));
+    }, 0);
+    document.getElementById('total-days-tracked').textContent = totalDaysTracked.toLocaleString();
 }
 function updateRelationshipStat() {
     if (relationshipAnniversaryIndex === null || !anniversaries[relationshipAnniversaryIndex]) { document.getElementById('relationship-duration').textContent = 'Nicht konfiguriert'; document.getElementById('relationship-detail').textContent = 'Tippe auf ⚙️'; return; }
@@ -439,12 +474,6 @@ function updateRelationshipStat() {
     document.getElementById('relationship-duration').textContent = `${days} Tage`;
     const y = Math.floor(days/365), m = Math.floor((days%365)/30);
     document.getElementById('relationship-detail').textContent = y > 0 ? `${y} Jahre, ${m} Monate` : `${m} Monate`;
-}
-function updateMilestones() {
-    if (relationshipAnniversaryIndex === null || !anniversaries[relationshipAnniversaryIndex]) { document.getElementById('milestones-container').innerHTML = '<span class="empty-state">Beziehungs-Jahrestag konfigurieren</span>'; return; }
-    const days = Math.floor((new Date() - new Date(anniversaries[relationshipAnniversaryIndex].date)) / 86400000);
-    const ms = [{d:100,l:'100 Tage',i:'💯'},{d:365,l:'1 Jahr',i:'🎂'},{d:500,l:'500 Tage',i:'🌟'},{d:730,l:'2 Jahre',i:'💕'},{d:1000,l:'1000 Tage',i:'🎉'},{d:1095,l:'3 Jahre',i:'💝'},{d:1825,l:'5 Jahre',i:'🏆'},{d:3650,l:'10 Jahre',i:'💎'}];
-    document.getElementById('milestones-container').innerHTML = ms.map(m => `<div class="milestone ${days>=m.d?'achieved':''}"><span class="milestone-icon">${m.i}</span><span>${m.l}</span></div>`).join('');
 }
 function openRelationshipConfig() {
     const list = document.getElementById('anniversary-select-list');
