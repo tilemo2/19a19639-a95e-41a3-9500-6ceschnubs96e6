@@ -191,7 +191,11 @@ function updateMainCountdown() {
     document.getElementById('minutes').textContent = mins.toString().padStart(2,'0');
     document.getElementById('seconds').textContent = secs.toString().padStart(2,'0');
     document.getElementById('main-name-scroll').textContent = ev.name;
-    document.getElementById('event-date').textContent = formatDateDisplay(ev.date, ev.time);
+    
+    const annivNum = getAnniversaryNumber(ev);
+    const annivNumText = formatAnniversaryNumber(annivNum);
+    const dateText = formatDateDisplay(ev.date, ev.time);
+    document.getElementById('event-date').textContent = annivNumText ? `${annivNumText} • ${dateText}` : dateText;
 }
 function updateAllCountdowns() {
     const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
@@ -215,6 +219,20 @@ function formatDateDisplay(date, time) {
     const [y,m,d] = date.split('-');
     return `${d}.${m}.${y}` + (time && time !== '00:00' ? ` • ${time}` : '');
 }
+
+// Berechnet die wievielte Wiederholung des Jahrestags bevorsteht
+function getAnniversaryNumber(a) {
+    const [startYear] = a.date.split('-').map(Number);
+    const targetDate = getTargetDate(a);
+    const targetYear = targetDate.getFullYear();
+    return targetYear - startYear;
+}
+
+// Formatiert die Wiederholungsnummer als Text
+function formatAnniversaryNumber(num) {
+    if (num === 0) return null; // Erstes Mal, keine Nummer anzeigen
+    return `${num}. Mal`;
+}
 function renderAllAnniversaries() {
     const c = document.getElementById('all-anniversaries');
     const evs = getAllAnniversariesForDisplay().slice(1); // Erste ist im Hero-Bereich
@@ -227,7 +245,14 @@ function renderAllAnniversaries() {
         card.dataset.originalIndex = ev.originalIndex;
         card.onclick = () => openDetail(ev.originalIndex);
         
-        card.innerHTML = `<h2 class="event-name">${ev.name}</h2>
+        const annivNum = getAnniversaryNumber(ev);
+        const annivNumText = formatAnniversaryNumber(annivNum);
+        
+        card.innerHTML = `
+            <div class="event-name-container">
+                <h2 class="event-name"><span class="event-name-text">${ev.name}</span></h2>
+            </div>
+            ${annivNumText ? `<span class="anniversary-number">${annivNumText}</span>` : ''}
             <div class="countdown">${['days','hours','minutes','seconds'].map((u,j) => `
                 <div class="countdown-item ${u==='days'?'countdown-days':''} ${!visibleUnits[u]?'unit-hidden':''}">
                     <span class="countdown-number" data-${u}>${u==='days'?'000':'00'}</span>
@@ -237,6 +262,17 @@ function renderAllAnniversaries() {
             <p class="event-date">${formatDateDisplay(ev.date, ev.time)}</p>`;
         c.appendChild(card);
         updateCountdownDisplayForCard(card, ev);
+        
+        // Check if name needs marquee animation
+        setTimeout(() => {
+            const nameContainer = card.querySelector('.event-name-container');
+            const nameText = card.querySelector('.event-name-text');
+            if (nameText && nameContainer && nameText.scrollWidth > nameContainer.offsetWidth) {
+                nameText.classList.add('marquee');
+                // Duplicate text for seamless loop
+                nameText.innerHTML = `${ev.name}<span class="marquee-spacer">•</span>${ev.name}`;
+            }
+        }, 100);
     });
     const add = document.createElement('div');
     add.className = 'anniversary-card add-card';
@@ -298,6 +334,9 @@ function initBackground() {
     })();
 }
 function closeOnBackdrop(e, id) {
+    // Prevent closing settings if buffer is active
+    if (id === 'settings-modal' && settingsOpenBuffer) return;
+    
     if (e.target.id === id) {
         document.getElementById(id).classList.add('hidden');
         document.body.classList.remove('modal-open');
@@ -309,7 +348,13 @@ function closeOnBackdrop(e, id) {
     }
 }
 window.closeOnBackdrop = closeOnBackdrop;
-function openSettings() { renderArchivedList(); document.getElementById('settings-modal').classList.remove('hidden'); document.body.classList.add('modal-open'); }
+function openSettings() { 
+    settingsOpenBuffer = true;
+    setTimeout(() => settingsOpenBuffer = false, 500);
+    renderArchivedList(); 
+    document.getElementById('settings-modal').classList.remove('hidden'); 
+    document.body.classList.add('modal-open'); 
+}
 function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); document.body.classList.remove('modal-open'); }
 window.openSettings = openSettings; window.closeSettings = closeSettings;
 function renderArchivedList() {
@@ -360,8 +405,28 @@ function updateDateDisplay() {
     if (currentDetailIndex === null) return;
     const a = anniversaries[currentDetailIndex];
     const [y,m,d] = a.date.split('-');
+    
+    const annivNum = getAnniversaryNumber(a);
+    const annivNumText = formatAnniversaryNumber(annivNum);
+    
+    // Datum anzeigen
     document.getElementById('display-date').textContent = `${d}.${m}.${y}`;
     document.getElementById('display-time').textContent = a.time || '00:00';
+    
+    // Wiederholungsnummer anzeigen/aktualisieren
+    let numEl = document.getElementById('detail-anniversary-number');
+    if (annivNumText) {
+        if (!numEl) {
+            numEl = document.createElement('div');
+            numEl.id = 'detail-anniversary-number';
+            numEl.className = 'detail-anniversary-number';
+            const dateDisplay = document.querySelector('.datetime-picker');
+            dateDisplay.parentNode.insertBefore(numEl, dateDisplay);
+        }
+        numEl.textContent = annivNumText;
+    } else if (numEl) {
+        numEl.remove();
+    }
 }
 function closeDetail() { 
     document.getElementById('detail-modal').classList.add('hidden'); 
@@ -677,6 +742,13 @@ function updateStatistics() {
         return sum + Math.max(0, Math.floor((new Date() - start) / 86400000));
     }, 0);
     document.getElementById('total-days-tracked').textContent = totalDaysTracked.toLocaleString();
+    
+    // Average repetitions
+    const avgRepetitions = active.length > 0 
+        ? (active.reduce((sum, a) => sum + getAnniversaryNumber(a), 0) / active.length).toFixed(1)
+        : '0';
+    const avgRepEl = document.getElementById('avg-repetitions');
+    if (avgRepEl) avgRepEl.textContent = avgRepetitions;
 }
 function updateRelationshipStat() {
     if (relationshipAnniversaryIndex === null || !anniversaries[relationshipAnniversaryIndex]) { 
