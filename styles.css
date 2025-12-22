@@ -153,6 +153,60 @@ body[data-theme="pastel"] {--bg-start: #ffecd2;--bg-mid: #fcb69f;--bg-end: #ff9a
     letter-spacing: 0.3px;
 }
 
+/* CELEBRATING BADGE */
+.celebrating-badge {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #ff6b9d, #ff8fa3, #ffd700);
+    background-size: 200% 200%;
+    animation: celebrateGradient 2s ease infinite;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+}
+
+@keyframes celebrateGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* CELEBRATING CARD STYLES */
+.card-celebrating {
+    border-color: rgba(255, 107, 157, 0.5) !important;
+    box-shadow: 0 8px 32px rgba(255, 107, 157, 0.3), 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2) !important;
+    animation: celebratePulse 2s ease-in-out infinite, fadeInUp 0.6s var(--transition) both !important;
+}
+
+.card-celebrating:hover {
+    box-shadow: 0 16px 48px rgba(255, 107, 157, 0.4), 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.2) !important;
+}
+
+@keyframes celebratePulse {
+    0%, 100% { 
+        border-color: rgba(255, 107, 157, 0.5);
+        box-shadow: 0 8px 32px rgba(255, 107, 157, 0.3), 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+    }
+    50% { 
+        border-color: rgba(255, 215, 0, 0.6);
+        box-shadow: 0 8px 40px rgba(255, 215, 0, 0.4), 0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.2);
+    }
+}
+
+/* NEGATIVE COUNTDOWN (celebrating) */
+.countdown-celebrating .countdown-number,
+.card-celebrating .countdown-number {
+    color: #ff6b9d;
+}
+
+.countdown-negative .countdown-number {
+    color: #ff6b9d;
+}
+
 /* ANNIVERSARY NUMBER - Detailansicht */
 .detail-anniversary-number {
     font-size: 14px;
