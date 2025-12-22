@@ -102,7 +102,36 @@ body[data-theme="pastel"] {--bg-start: #ffecd2;--bg-mid: #fcb69f;--bg-end: #ff9a
 /* ANNIVERSARY CARDS */
 .anniversary-card {position: relative;background: rgba(255,255,255,0.08);backdrop-filter: blur(40px) saturate(180%);-webkit-backdrop-filter: blur(40px) saturate(180%);border-radius: 24px;padding: 30px 26px;border: 1px solid rgba(255,255,255,0.2);box-shadow: 0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.3),inset 0 -1px 0 rgba(0,0,0,0.2);transition: all 0.35s cubic-bezier(0.2,0.8,0.2,1);text-align: center;cursor: pointer;animation: fadeInUp 0.6s var(--transition) both;}
 .anniversary-card:hover {transform: translateY(-8px);box-shadow: 0 16px 48px rgba(0,0,0,0.5),0 4px 12px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.4),inset 0 -1px 0 rgba(0,0,0,0.2);}
-.anniversary-card .event-name {font-size: 24px;font-weight: 600;letter-spacing: -0.5px;margin-bottom: 30px;}
+
+/* Event name container with marquee for long names */
+.anniversary-card .event-name-container {
+    width: 100%;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.anniversary-card .event-name {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin: 0;
+    white-space: nowrap;
+}
+.anniversary-card .event-name-text {
+    display: inline-block;
+    white-space: nowrap;
+}
+.anniversary-card .event-name-text.marquee {
+    animation: marqueeScroll 8s linear infinite;
+}
+.anniversary-card .marquee-spacer {
+    padding: 0 30px;
+    opacity: 0.5;
+}
+@keyframes marqueeScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
 .anniversary-card .countdown {gap: 8px;margin-bottom: 20px;}
 .anniversary-card .countdown-item {min-width: 60px;}
 .anniversary-card .countdown-days {min-width: 80px;}
@@ -110,6 +139,32 @@ body[data-theme="pastel"] {--bg-start: #ffecd2;--bg-mid: #fcb69f;--bg-end: #ff9a
 .anniversary-card .countdown-label {font-size: 11px;margin-top: 6px;}
 .anniversary-card .countdown-separator {font-size: 28px;margin: 0 -2px;padding-bottom: 16px;}
 .anniversary-card .event-date {font-size: 14px;}
+
+/* ANNIVERSARY NUMBER - Kacheln */
+.anniversary-number {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent-color);
+    background: rgba(0, 122, 255, 0.15);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+}
+
+/* ANNIVERSARY NUMBER - Detailansicht */
+.detail-anniversary-number {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent-color);
+    background: rgba(0, 122, 255, 0.15);
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    display: inline-block;
+    letter-spacing: 0.3px;
+}
 
 /* ADD CARD */
 .add-card {background: rgba(255,255,255,0.05);border: 1px solid rgba(255,255,255,0.15);box-shadow: 0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.2);}
