@@ -8,6 +8,7 @@ let currentTrailStyle = 'hearts', currentColor = 'red';
 let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
 let currentDetailIndex = null, confettiTriggered = {}, isNewAnniversary = false;
 let relationshipAnniversaryIndex = null;
+let currentHeroAnniversaryIndex = null; // Track which anniversary is shown in hero
 let pickerYear = 2024, pickerMonth = 11, pickerDay = 22, pickerHour = 0, pickerMinute = 0;
 let photoViewerYears = [], photoViewerCurrentIndex = 0;
 const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -247,7 +248,15 @@ function updateMainCountdown() {
         document.getElementById('main-name-scroll').textContent = 'Kein Jahrestag'; 
         document.getElementById('event-date').textContent = '';
         document.getElementById('countdown').classList.remove('countdown-negative', 'countdown-celebrating');
+        currentHeroAnniversaryIndex = null;
         return; 
+    }
+    
+    // Prüfe ob sich der Hero-Jahrestag geändert hat
+    if (currentHeroAnniversaryIndex !== ev.originalIndex) {
+        currentHeroAnniversaryIndex = ev.originalIndex;
+        // Auch Karten neu rendern wenn sich der Hero ändert
+        renderAllAnniversaries();
     }
     
     const isNegative = ev.diff < 0;
@@ -278,8 +287,25 @@ function updateMainCountdown() {
 function updateAllCountdowns() {
     const cards = document.querySelectorAll('.anniversary-card:not(.add-card)');
     const evs = getAllAnniversariesForDisplay().slice(1);
+    
+    // Prüfe ob die Anzahl der Karten noch stimmt
+    if (cards.length !== evs.length) {
+        // Anzahl hat sich geändert - komplett neu rendern
+        renderAllAnniversaries();
+        return;
+    }
+    
     cards.forEach((c,i) => { 
-        if (evs[i]) updateCountdownDisplayForCard(c, evs[i]); 
+        if (evs[i]) {
+            // Prüfe ob die Karte noch zum richtigen Jahrestag gehört
+            const cardIndex = parseInt(c.dataset.originalIndex);
+            if (cardIndex !== evs[i].originalIndex) {
+                // Indizes stimmen nicht mehr - neu rendern
+                renderAllAnniversaries();
+                return;
+            }
+            updateCountdownDisplayForCard(c, evs[i]); 
+        }
     });
 }
 function updateCountdownDisplayForCard(card, ev) {
@@ -570,6 +596,9 @@ function confirmDelete() {
         const deletedName = anniversaries[currentDetailIndex].name;
         // Entferne aus confettiTriggered falls vorhanden
         delete confettiTriggered[deletedName];
+        
+        // Reset Hero-Index damit er neu berechnet wird
+        currentHeroAnniversaryIndex = null;
         
         anniversaries.splice(currentDetailIndex, 1); 
         saveAnniversaries(); 
