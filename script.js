@@ -27,10 +27,15 @@ async function hashToken(t) {
     return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 async function checkAccess() {
-    const token = new URLSearchParams(window.location.search).get('token');
-    if (!token) { showError(); return; }
-    if (await hashToken(token) === CORRECT_TOKEN_HASH) showContent();
-    else showError();
+    try {
+        const token = new URLSearchParams(window.location.search).get('token');
+        if (!token) { showError(); return; }
+        if (await hashToken(token) === CORRECT_TOKEN_HASH) showContent();
+        else showError();
+    } catch (e) {
+        console.error('Access check failed:', e);
+        showError();
+    }
 }
 function showError() {
     document.getElementById('loading').classList.add('hidden');
