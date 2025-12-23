@@ -6,7 +6,7 @@ const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253
 // ============================================
 const SUPABASE_CONFIG = {
     url: 'https://dcxjtdiykoudrtgmrslu.supabase.co',     // z.B. 'https://abcdefgh.supabase.co'
-    key: 'sb_publishable_6Nu7cCtwGB7GOxQK7eH5rQ_qmc-cRzl'                          // Der lange "anon public" Key
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjeGp0ZGl5a291ZHJ0Z21yc2x1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NDIxODksImV4cCI6MjA4MjAxODE4OX0.5zG5uM344HRpYbFNCTT2MbgSscodtdmFj6YxZ8Fdvzs'                          // Der lange "anon public" Key
 };
 
 // Supabase Client initialisieren
