@@ -6,7 +6,7 @@ const GITHUB_CONFIG = {
     owner: 'tilemo2',      // z.B. 'maxmustermann'
     repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
     path: 'data.json',                   // Datei wo die Daten gespeichert werden
-    token: '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'          // Personal Access Token (siehe Anleitung)
+    token: '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'          // Personal Access Token (siehe Anleitung)
 };
 
 let anniversaries = [];
@@ -91,13 +91,19 @@ async function saveToGitHub() {
             body.sha = githubFileSha;
         }
         
+        // Authorization Header - funktioniert für beide Token-Typen
+        const authHeader = GITHUB_CONFIG.token.startsWith('github_pat_') 
+            ? `Bearer ${GITHUB_CONFIG.token}`
+            : `token ${GITHUB_CONFIG.token}`;
+        
         const response = await fetch(
             `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
             {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `token ${GITHUB_CONFIG.token}`,
+                    'Authorization': authHeader,
                     'Content-Type': 'application/json',
+                    'X-GitHub-Api-Version': '2022-11-28'
                 },
                 body: JSON.stringify(body)
             }
@@ -130,13 +136,19 @@ async function loadAnniversaries() {
         console.log('🔄 Versuche von GitHub zu laden...');
         console.log('Repository:', GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo);
         
+        // Authorization Header - funktioniert für beide Token-Typen
+        const authHeader = GITHUB_CONFIG.token.startsWith('github_pat_') 
+            ? `Bearer ${GITHUB_CONFIG.token}`
+            : `token ${GITHUB_CONFIG.token}`;
+        
         try {
             const response = await fetch(
                 `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
                 {
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Authorization': authHeader,
                         'Accept': 'application/vnd.github.v3+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
                     }
                 }
             );
