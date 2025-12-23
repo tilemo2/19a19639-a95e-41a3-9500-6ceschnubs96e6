@@ -3,10 +3,10 @@ const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253
 
 // GitHub Konfiguration - DIESE WERTE MUSST DU ANPASSEN!
 const GITHUB_CONFIG = {
-    owner: 'tilemo2',      // z.B. 'maxmustermann'
-    repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
+    owner: 'DEIN_GITHUB_USERNAME',      // z.B. 'maxmustermann'
+    repo: 'DEIN_REPO_NAME',             // z.B. 'anniversary-countdown'
     path: 'data.json',                   // Datei wo die Daten gespeichert werden
-    token: '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'          // Personal Access Token (siehe Anleitung)
+    token: 'DEIN_GITHUB_TOKEN'          // Personal Access Token (siehe Anleitung)
 };
 
 let anniversaries = [];
@@ -127,6 +127,9 @@ async function saveToGitHub() {
 async function loadAnniversaries() {
     // Versuche zuerst von GitHub zu laden
     if (GITHUB_CONFIG.token !== 'DEIN_GITHUB_TOKEN') {
+        console.log('🔄 Versuche von GitHub zu laden...');
+        console.log('Repository:', GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo);
+        
         try {
             const response = await fetch(
                 `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
@@ -137,6 +140,8 @@ async function loadAnniversaries() {
                     }
                 }
             );
+            
+            console.log('GitHub Response Status:', response.status);
             
             if (response.ok) {
                 const data = await response.json();
@@ -149,10 +154,16 @@ async function loadAnniversaries() {
                 return;
             } else if (response.status === 404) {
                 console.log('📁 data.json existiert noch nicht auf GitHub - wird bei erstem Speichern erstellt');
+                // Kein Return - wir laden von localStorage und speichern dann auf GitHub
+            } else {
+                const errorData = await response.json();
+                console.error('❌ GitHub Fehler:', response.status, errorData.message);
             }
         } catch (e) {
-            console.error('GitHub Laden fehlgeschlagen:', e);
+            console.error('❌ GitHub Laden fehlgeschlagen:', e);
         }
+    } else {
+        console.warn('⚠️ GitHub Token nicht konfiguriert - nur lokale Speicherung');
     }
     
     // Fallback: Von localStorage laden
@@ -161,6 +172,12 @@ async function loadAnniversaries() {
         try { 
             anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'}));
             console.log('📦 Von localStorage geladen:', anniversaries.length, 'Jahrestage');
+            
+            // Wenn GitHub 404 war (Datei existiert nicht), speichere jetzt auf GitHub
+            if (GITHUB_CONFIG.token !== 'DEIN_GITHUB_TOKEN' && !githubFileSha && anniversaries.length > 0) {
+                console.log('📤 Übertrage lokale Daten zu GitHub...');
+                saveToGitHub();
+            }
         } catch(e) {
             console.error('Error loading anniversaries:', e);
         }
