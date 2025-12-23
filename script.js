@@ -6,7 +6,7 @@ const GITHUB_CONFIG = {
     owner: 'tilemo2',      // z.B. 'maxmustermann'
     repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
     path: 'data.json',                   // Datei wo die Daten gespeichert werden
-    token: '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'          // Personal Access Token (siehe Anleitung)
+    token: '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'          // Personal Access Token (siehe Anleitung)
 };
 
 let anniversaries = [];
