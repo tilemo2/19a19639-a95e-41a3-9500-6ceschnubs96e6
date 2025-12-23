@@ -281,7 +281,6 @@ function applySettings(p) {
     
     applyVisibleUnits();
 }
-}
 
 async function initApp() {
     // Zeige Ladezustand
