@@ -1,24 +1,35 @@
 // Token Hash für Zugang zur Seite
 const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253cbdf4afb297f";
 
-// GitHub Konfiguration - DIESE WERTE MUSST DU ANPASSEN!
-const GITHUB_CONFIG = {
-    owner: 'tilemo2',      // z.B. 'maxmustermann'
-    repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
-    path: 'data.json',                   // Datei wo die Daten gespeichert werden
-    token: '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'          // Personal Access Token (siehe Anleitung)
+// ============================================
+// SUPABASE KONFIGURATION - HIER ANPASSEN!
+// ============================================
+const SUPABASE_CONFIG = {
+    url: 'https://dcxjtdiykoudrtgmrslu.supabase.co',     // z.B. 'https://abcdefgh.supabase.co'
+    key: 'sb_publishable_6Nu7cCtwGB7GOxQK7eH5rQ_qmc-cRzl'                          // Der lange "anon public" Key
 };
 
+// Supabase Client initialisieren
+let supabase = null;
+
+function initSupabase() {
+    if (!SUPABASE_CONFIG.url.includes('DEIN_PROJECT')) {
+        supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+        console.log('✅ Supabase initialisiert');
+    } else {
+        console.warn('⚠️ Supabase nicht konfiguriert - nur lokale Speicherung');
+    }
+}
+
 let anniversaries = [];
-let githubFileSha = null; // Wird benötigt für Updates
-let isSaving = false; // Verhindert mehrfaches gleichzeitiges Speichern
-let saveQueue = false; // Merkt sich ob gespeichert werden soll
+let isSaving = false;
+let saveQueue = false;
 let emptyClickCount = 0, clickResetTimer = null, settingsOpenBuffer = false;
 let currentTrailStyle = 'hearts', currentColor = 'red';
 let visibleUnits = { days: true, hours: true, minutes: true, seconds: true };
 let currentDetailIndex = null, confettiTriggered = {}, isNewAnniversary = false;
 let relationshipAnniversaryIndex = null;
-let currentHeroAnniversaryIndex = null; // Track which anniversary is shown in hero
+let currentHeroAnniversaryIndex = null;
 let pickerYear = 2024, pickerMonth = 11, pickerDay = 22, pickerHour = 0, pickerMinute = 0;
 let photoViewerYears = [], photoViewerCurrentIndex = 0;
 const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
@@ -57,68 +68,46 @@ function showContent() {
     document.getElementById('content').classList.remove('hidden');
     initApp();
 }
+
+// ============================================
+// SUPABASE SPEICHER-FUNKTIONEN
+// ============================================
+
 function saveAnniversaries() { 
     // Speichere auch lokal als Backup
     localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
     
-    // Speichere auf GitHub (mit Debouncing)
+    // Speichere auf Supabase (mit Debouncing)
     if (isSaving) {
         saveQueue = true;
         return;
     }
-    saveToGitHub();
+    saveToSupabase();
 }
 
-async function saveToGitHub() {
-    if (GITHUB_CONFIG.token === 'DEIN_GITHUB_TOKEN') {
-        console.warn('GitHub Token nicht konfiguriert - nur lokale Speicherung');
+async function saveToSupabase() {
+    if (!supabase) {
+        console.warn('⚠️ Supabase nicht konfiguriert - nur lokale Speicherung');
         return;
     }
     
     isSaving = true;
     
     try {
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(anniversaries, null, 2))));
+        const { data, error } = await supabase
+            .from('anniversaries')
+            .upsert({
+                id: 'user_data',  // Feste ID für single-user
+                data: anniversaries,
+                updated_at: new Date().toISOString()
+            })
+            .select();
         
-        const body = {
-            message: `Update anniversaries - ${new Date().toLocaleString('de-DE')}`,
-            content: content,
-            branch: 'main'
-        };
+        if (error) throw error;
         
-        // SHA wird benötigt wenn die Datei bereits existiert
-        if (githubFileSha) {
-            body.sha = githubFileSha;
-        }
-        
-        // Authorization Header - funktioniert für beide Token-Typen
-        const authHeader = GITHUB_CONFIG.token.startsWith('github_pat_') 
-            ? `Bearer ${GITHUB_CONFIG.token}`
-            : `token ${GITHUB_CONFIG.token}`;
-        
-        const response = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': authHeader,
-                    'Content-Type': 'application/json',
-                    'X-GitHub-Api-Version': '2022-11-28'
-                },
-                body: JSON.stringify(body)
-            }
-        );
-        
-        if (response.ok) {
-            const data = await response.json();
-            githubFileSha = data.content.sha;
-            console.log('✅ Auf GitHub gespeichert');
-        } else {
-            const error = await response.json();
-            console.error('❌ GitHub Speichern fehlgeschlagen:', error.message);
-        }
+        console.log('✅ Auf Supabase gespeichert');
     } catch (e) {
-        console.error('❌ GitHub Fehler:', e);
+        console.error('❌ Supabase Speichern fehlgeschlagen:', e);
     }
     
     isSaving = false;
@@ -126,70 +115,60 @@ async function saveToGitHub() {
     // Falls während dem Speichern weitere Änderungen kamen
     if (saveQueue) {
         saveQueue = false;
-        setTimeout(saveToGitHub, 1000);
+        setTimeout(saveToSupabase, 1000);
     }
 }
 
 async function loadAnniversaries() {
-    // Versuche zuerst von GitHub zu laden
-    if (GITHUB_CONFIG.token !== 'DEIN_GITHUB_TOKEN') {
-        console.log('🔄 Versuche von GitHub zu laden...');
-        console.log('Repository:', GITHUB_CONFIG.owner + '/' + GITHUB_CONFIG.repo);
-        
-        // Authorization Header - funktioniert für beide Token-Typen
-        const authHeader = GITHUB_CONFIG.token.startsWith('github_pat_') 
-            ? `Bearer ${GITHUB_CONFIG.token}`
-            : `token ${GITHUB_CONFIG.token}`;
-        
-        try {
-            const response = await fetch(
-                `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
-                {
-                    headers: {
-                        'Authorization': authHeader,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'X-GitHub-Api-Version': '2022-11-28'
-                    }
-                }
-            );
-            
-            console.log('GitHub Response Status:', response.status);
-            
-            if (response.ok) {
-                const data = await response.json();
-                githubFileSha = data.sha;
-                const content = decodeURIComponent(escape(atob(data.content)));
-                anniversaries = JSON.parse(content).map(a => ({...a, time: a.time || '00:00'}));
-                console.log('✅ Von GitHub geladen:', anniversaries.length, 'Jahrestage');
-                // Auch lokal speichern als Backup
-                localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
-                return;
-            } else if (response.status === 404) {
-                console.log('📁 data.json existiert noch nicht auf GitHub - wird bei erstem Speichern erstellt');
-                // Kein Return - wir laden von localStorage und speichern dann auf GitHub
-            } else {
-                const errorData = await response.json();
-                console.error('❌ GitHub Fehler:', response.status, errorData.message);
-            }
-        } catch (e) {
-            console.error('❌ GitHub Laden fehlgeschlagen:', e);
-        }
-    } else {
-        console.warn('⚠️ GitHub Token nicht konfiguriert - nur lokale Speicherung');
+    if (!supabase) {
+        console.warn('⚠️ Supabase nicht konfiguriert - lade von localStorage');
+        loadFromLocalStorage();
+        return;
     }
     
-    // Fallback: Von localStorage laden
+    try {
+        console.log('🔄 Versuche von Supabase zu laden...');
+        
+        const { data, error } = await supabase
+            .from('anniversaries')
+            .select('*')
+            .eq('id', 'user_data')
+            .single();
+        
+        if (error) {
+            if (error.code === 'PGRST116') {
+                console.log('📁 Noch keine Daten auf Supabase - lade lokal');
+                loadFromLocalStorage();
+                // Speichere lokale Daten auf Supabase
+                if (anniversaries.length > 0) {
+                    console.log('📤 Übertrage lokale Daten zu Supabase...');
+                    await saveToSupabase();
+                }
+            } else {
+                throw error;
+            }
+            return;
+        }
+        
+        if (data && data.data) {
+            anniversaries = data.data.map(a => ({...a, time: a.time || '00:00'}));
+            console.log('✅ Von Supabase geladen:', anniversaries.length, 'Jahrestage');
+            // Auch lokal speichern als Backup
+            localStorage.setItem('anniversaries', JSON.stringify(anniversaries));
+        }
+    } catch (e) {
+        console.error('❌ Supabase Laden fehlgeschlagen:', e);
+        console.log('📦 Fallback: Lade von localStorage');
+        loadFromLocalStorage();
+    }
+}
+
+function loadFromLocalStorage() {
     const s = localStorage.getItem('anniversaries');
     if (s) {
         try { 
             anniversaries = JSON.parse(s).map(a => ({...a, time: a.time || '00:00'}));
             console.log('📦 Von localStorage geladen:', anniversaries.length, 'Jahrestage');
-            
-            // Wenn GitHub 404 war (Datei existiert nicht), speichere jetzt auf GitHub
-            if (GITHUB_CONFIG.token !== 'DEIN_GITHUB_TOKEN' && !githubFileSha && anniversaries.length > 0) {
-                console.log('📤 Übertrage lokale Daten zu GitHub...');
-                saveToGitHub();
-            }
         } catch(e) {
             console.error('Error loading anniversaries:', e);
         }
@@ -197,12 +176,23 @@ async function loadAnniversaries() {
 }
 
 // Debug-Funktion um alles zurückzusetzen (über Konsole aufrufbar)
-window.resetAllData = function() {
+window.resetAllData = async function() {
     localStorage.removeItem('anniversaries');
     localStorage.removeItem('settings');
     anniversaries = [];
+    
+    if (supabase) {
+        try {
+            await supabase.from('anniversaries').delete().eq('id', 'user_data');
+            console.log('✅ Supabase Daten gelöscht');
+        } catch (e) {
+            console.error('❌ Fehler beim Löschen:', e);
+        }
+    }
+    
     location.reload();
 };
+
 function saveSettings() {
     localStorage.setItem('settings', JSON.stringify({
         trail: currentTrailStyle, color: currentColor, units: visibleUnits,
@@ -232,11 +222,15 @@ function loadSettings() {
         applyVisibleUnits();
     } catch(e) {}
 }
+
 async function initApp() {
     // Zeige Ladezustand
     document.getElementById('main-name-scroll').textContent = 'Lädt...';
     
-    // Lade Daten von GitHub (async)
+    // Initialisiere Supabase
+    initSupabase();
+    
+    // Lade Daten von Supabase (async)
     await loadAnniversaries(); 
     loadSettings();
     updateMainCountdown(); 
@@ -753,7 +747,7 @@ function confirmDelete() {
         // Lösche den Jahrestag
         anniversaries.splice(currentDetailIndex, 1); 
         
-        // Speichere (lokal + GitHub)
+        // Speichere (lokal + Supabase)
         saveAnniversaries(); 
         
         // Schließe Modals
