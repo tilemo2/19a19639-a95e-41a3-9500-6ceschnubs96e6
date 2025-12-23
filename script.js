@@ -184,6 +184,7 @@ window.resetAllData = async function() {
     if (supabaseClient) {
         try {
             await supabaseClient.from('anniversaries').delete().eq('id', 'user_data');
+            await supabaseClient.from('anniversaries').delete().eq('id', 'user_settings');
             console.log('✅ Supabase Daten gelöscht');
         } catch (e) {
             console.error('❌ Fehler beim Löschen:', e);
@@ -194,33 +195,92 @@ window.resetAllData = async function() {
 };
 
 function saveSettings() {
-    localStorage.setItem('settings', JSON.stringify({
-        trail: currentTrailStyle, color: currentColor, units: visibleUnits,
+    const settings = {
+        trail: currentTrailStyle, 
+        color: currentColor, 
+        units: visibleUnits,
         font: document.querySelector('input[name="font"]:checked')?.value || 'system',
         theme: document.querySelector('input[name="theme"]:checked')?.value || 'romantic',
         relationshipIndex: relationshipAnniversaryIndex
-    }));
+    };
+    
+    // Speichere lokal als Backup
+    localStorage.setItem('settings', JSON.stringify(settings));
+    
+    // Speichere auch auf Supabase
+    saveSettingsToSupabase(settings);
 }
-function loadSettings() {
+
+async function saveSettingsToSupabase(settings) {
+    if (!supabaseClient) return;
+    
+    try {
+        await supabaseClient
+            .from('anniversaries')
+            .upsert({
+                id: 'user_settings',
+                data: settings,
+                updated_at: new Date().toISOString()
+            });
+        console.log('✅ Einstellungen auf Supabase gespeichert');
+    } catch (e) {
+        console.error('❌ Fehler beim Speichern der Einstellungen:', e);
+    }
+}
+async function loadSettings() {
+    // Versuche zuerst von Supabase zu laden
+    if (supabaseClient) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('anniversaries')
+                .select('*')
+                .eq('id', 'user_settings')
+                .single();
+            
+            if (data && data.data) {
+                console.log('✅ Einstellungen von Supabase geladen');
+                applySettings(data.data);
+                // Auch lokal speichern als Backup
+                localStorage.setItem('settings', JSON.stringify(data.data));
+                return;
+            }
+        } catch (e) {
+            console.log('📦 Keine Einstellungen auf Supabase - lade lokal');
+        }
+    }
+    
+    // Fallback: Von localStorage laden
     const s = localStorage.getItem('settings');
-    if (s) try {
-        const p = JSON.parse(s);
-        if (p.trail) currentTrailStyle = p.trail;
-        if (p.color) currentColor = p.color;
-        if (p.units) visibleUnits = p.units;
-        if (p.font) applyFont(p.font);
-        if (p.theme) applyTheme(p.theme);
-        if (p.relationshipIndex !== undefined) relationshipAnniversaryIndex = p.relationshipIndex;
-        ['trail','color','font','theme'].forEach(n => {
-            const r = document.querySelector(`input[name="${n}"][value="${p[n]}"]`);
-            if (r) r.checked = true;
-        });
-        Object.keys(visibleUnits).forEach(u => {
-            const c = document.querySelector(`input[data-unit="${u}"]`);
-            if (c) c.checked = visibleUnits[u];
-        });
-        applyVisibleUnits();
-    } catch(e) {}
+    if (s) {
+        try {
+            const p = JSON.parse(s);
+            applySettings(p);
+        } catch(e) {
+            console.error('Fehler beim Laden der Einstellungen:', e);
+        }
+    }
+}
+
+function applySettings(p) {
+    if (p.trail) currentTrailStyle = p.trail;
+    if (p.color) currentColor = p.color;
+    if (p.units) visibleUnits = p.units;
+    if (p.font) applyFont(p.font);
+    if (p.theme) applyTheme(p.theme);
+    if (p.relationshipIndex !== undefined) relationshipAnniversaryIndex = p.relationshipIndex;
+    
+    ['trail','color','font','theme'].forEach(n => {
+        const r = document.querySelector(`input[name="${n}"][value="${p[n]}"]`);
+        if (r) r.checked = true;
+    });
+    
+    Object.keys(visibleUnits).forEach(u => {
+        const c = document.querySelector(`input[data-unit="${u}"]`);
+        if (c) c.checked = visibleUnits[u];
+    });
+    
+    applyVisibleUnits();
+}
 }
 
 async function initApp() {
@@ -231,8 +291,8 @@ async function initApp() {
     initSupabase();
     
     // Lade Daten von Supabase (async)
-    await loadAnniversaries(); 
-    loadSettings();
+    await loadAnniversaries();
+    await loadSettings();
     updateMainCountdown(); 
     renderAllAnniversaries(); 
     updateStatistics();
