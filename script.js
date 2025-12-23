@@ -3,10 +3,10 @@ const CORRECT_TOKEN_HASH = "7c86e5eb9c3dfadb03cdebb85032711359458e33fb07de36f253
 
 // GitHub Konfiguration - DIESE WERTE MUSST DU ANPASSEN!
 const GITHUB_CONFIG = {
-    owner: 'DEIN_GITHUB_USERNAME',      // z.B. 'maxmustermann'
-    repo: 'DEIN_REPO_NAME',             // z.B. 'anniversary-countdown'
+    owner: 'tilemo2',      // z.B. 'maxmustermann'
+    repo: '19a19639-a95e-41a3-9500-6ceschnubs96e6',             // z.B. 'anniversary-countdown'
     path: 'data.json',                   // Datei wo die Daten gespeichert werden
-    token: 'DEIN_GITHUB_TOKEN'          // Personal Access Token (siehe Anleitung)
+    token: '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'          // Personal Access Token (siehe Anleitung)
 };
 
 let anniversaries = [];
