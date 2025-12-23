@@ -10,11 +10,11 @@ const SUPABASE_CONFIG = {
 };
 
 // Supabase Client initialisieren
-let supabase = null;
+let supabaseClient = null;
 
 function initSupabase() {
     if (!SUPABASE_CONFIG.url.includes('DEIN_PROJECT')) {
-        supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+        supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
         console.log('✅ Supabase initialisiert');
     } else {
         console.warn('⚠️ Supabase nicht konfiguriert - nur lokale Speicherung');
@@ -86,7 +86,7 @@ function saveAnniversaries() {
 }
 
 async function saveToSupabase() {
-    if (!supabase) {
+    if (!supabaseClient) {
         console.warn('⚠️ Supabase nicht konfiguriert - nur lokale Speicherung');
         return;
     }
@@ -94,7 +94,7 @@ async function saveToSupabase() {
     isSaving = true;
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('anniversaries')
             .upsert({
                 id: 'user_data',  // Feste ID für single-user
@@ -120,7 +120,7 @@ async function saveToSupabase() {
 }
 
 async function loadAnniversaries() {
-    if (!supabase) {
+    if (!supabaseClient) {
         console.warn('⚠️ Supabase nicht konfiguriert - lade von localStorage');
         loadFromLocalStorage();
         return;
@@ -129,7 +129,7 @@ async function loadAnniversaries() {
     try {
         console.log('🔄 Versuche von Supabase zu laden...');
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('anniversaries')
             .select('*')
             .eq('id', 'user_data')
@@ -181,9 +181,9 @@ window.resetAllData = async function() {
     localStorage.removeItem('settings');
     anniversaries = [];
     
-    if (supabase) {
+    if (supabaseClient) {
         try {
-            await supabase.from('anniversaries').delete().eq('id', 'user_data');
+            await supabaseClient.from('anniversaries').delete().eq('id', 'user_data');
             console.log('✅ Supabase Daten gelöscht');
         } catch (e) {
             console.error('❌ Fehler beim Löschen:', e);
